@@ -11,7 +11,7 @@ let collectedMetrics: WebVitalsMetric[] = [];
 
 export function reportWebVitals(metric: NextWebVitalsMetric) {
   collectedMetrics.push({ route: window.__NEXT_DATA__?.page, ...metric });
-  // if Axiom env vars are not set, do nothing,
+  // if Logtail env vars are not set, do nothing,
   // otherwise devs will get errors on dev environments
   if (!config.isEnvVarsSet()) {
     return;
@@ -23,7 +23,7 @@ function sendMetrics() {
   const body = JSON.stringify(config.wrapWebVitalsObject(collectedMetrics));
   const headers = {
     'Content-Type': 'application/json',
-    'User-Agent': 'next-axiom/v' + Version,
+    'User-Agent': 'next-logtail/v' + Version,
   };
   if (config.token) {
     headers['Authorization'] = `Bearer ${config.token}`;

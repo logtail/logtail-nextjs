@@ -3,7 +3,7 @@ import { NetlifyInfo } from './platform/netlify';
 import { isNoPrettyPrint, throttle } from './shared';
 
 const url = config.getLogsEndpoint();
-const LOG_LEVEL = process.env.AXIOM_LOG_LEVEL || 'debug';
+const LOG_LEVEL = process.env.LOGTAIL_LOG_LEVEL || 'debug';
 
 export interface LogEvent {
   level: string;
@@ -130,7 +130,7 @@ export class Logger {
     }
 
     if (!config.isEnvVarsSet()) {
-      // if AXIOM ingesting url is not set, fallback to printing to console
+      // if LOGTAIL SOURCE TOKEN is not set, fallback to printing to console
       // to avoid network errors in development environments
       this.logEvents.forEach((ev) => prettyPrint(ev));
       this.logEvents = [];
@@ -144,7 +144,7 @@ export class Logger {
     this.logEvents = [];
     const headers = {
       'Content-Type': 'application/json',
-      'User-Agent': 'next-axiom/v' + Version,
+      'User-Agent': 'logtail-nextjs/v' + Version,
     };
     if (config.token) {
       headers['Authorization'] = `Bearer ${config.token}`;
@@ -170,7 +170,7 @@ export class Logger {
         sendFallback();
       }
     } catch (e) {
-      console.error(`Failed to send logs to Axiom: ${e}`);
+      console.error(`Failed to send logs to Logtail: ${e}`);
     }
   }
 

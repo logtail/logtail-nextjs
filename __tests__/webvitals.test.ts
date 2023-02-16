@@ -3,9 +3,10 @@
  */
 import { jest } from '@jest/globals';
 import { NextWebVitalsMetric } from 'next/app';
-// set axiom env vars before importing webvitals
-process.env.AXIOM_URL = '';
-process.env.NEXT_PUBLIC_AXIOM_INGEST_ENDPOINT = 'https://example.co/api/test';
+// set logtail env vars before importing webvitals
+process.env.LOGTAIL_URL = '';
+const token = 'very_secret';
+process.env.NEXT_PUBLIC_LOGTAIL_SOURCE_TOKEN = token;
 import { reportWebVitals } from '../src/webVitals';
 import 'whatwg-fetch';
 import { Version } from '../src/config';
@@ -38,11 +39,12 @@ test('throttled sendMetrics', async () => {
   metricsMatrix[2].forEach(reportWebVitals);
   jest.advanceTimersByTime(1000);
 
-  const url = '/_axiom/web-vitals';
+  const url = '/_logtail';
   const payload = {
     headers: {
       'Content-Type': 'application/json',
-      'User-Agent': 'next-axiom/v' + Version,
+      'User-Agent': 'next-logtail/v' + Version,
+      'Authorization': 'Bearer ' + token
     },
     method: 'POST',
     keepalive: true,

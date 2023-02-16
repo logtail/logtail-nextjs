@@ -1,9 +1,9 @@
 // @ts-check
 
 /** @type {import('next').NextConfig} */
-const { withAxiom } = require('next-axiom');
+const { withLogtail } = require('next-logtail');
 
-const nextConfig = withAxiom({
+const nextConfig = withLogtail({
   reactStrictMode: true,
 })
 

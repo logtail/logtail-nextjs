@@ -1,6 +1,6 @@
-import { withAxiomGetServerSideProps } from 'next-axiom';
+import { withLogtailGetServerSideProps } from 'next-logtail';
 
-export const getServerSideProps = withAxiomGetServerSideProps(async ({ req, log }) => {
+export const getServerSideProps = withLogtailGetServerSideProps(async ({ req, log }) => {
   log.info('Hello from server side');
   return {
     props: {

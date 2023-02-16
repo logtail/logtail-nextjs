@@ -1,25 +1,25 @@
-import { Logger, withAxiom } from '../src/index';
-import { withAxiomGetServerSideProps, withAxiomNextServerSidePropsHandler } from '../src/withAxiom';
+import { Logger, withLogtail } from '../src/index';
+import { withLogtailGetServerSideProps, withLogtailNextServerSidePropsHandler } from '../src/withLogtail';
 import { GetServerSideProps, GetServerSidePropsContext, NextApiRequest, NextApiResponse } from 'next';
 import 'whatwg-fetch';
 import { NextFetchEvent, NextRequest, NextResponse } from 'next/server';
 
-test('withAxiom(NextConfig)', async () => {
-  const config = withAxiom({
+test('withLogtail(NextConfig)', async () => {
+  const config = withLogtail({
     reactStrictMode: true,
   });
   expect(config).toBeInstanceOf(Object);
 });
 
-test('withAxiom(NextApiHandler)', async () => {
-  const handler = withAxiom((_req: NextApiRequest, res: NextApiResponse) => {
+test('withLogtail(NextApiHandler)', async () => {
+  const handler = withLogtail((_req: NextApiRequest, res: NextApiResponse) => {
     res.status(200).end();
   });
   expect(handler).toBeInstanceOf(Function);
 });
 
-test('withAxiomNextServerSidePropsHandler', async () => {
-  const handler = withAxiomNextServerSidePropsHandler(async (context) => {
+test('withLogtailNextServerSidePropsHandler', async () => {
+  const handler = withLogtailNextServerSidePropsHandler(async (context) => {
     expect(context.log).toBeInstanceOf(Logger);
     return {
       props: {},
@@ -28,17 +28,17 @@ test('withAxiomNextServerSidePropsHandler', async () => {
   expect(handler).toBeInstanceOf(Function);
 });
 
-test('withAxiom(NextMiddleware)', async () => {
+test('withLogtail(NextMiddleware)', async () => {
   process.env.LAMBDA_TASK_ROOT = 'lol'; // shhh this is AWS Lambda, I promise
-  const handler = withAxiom((_req: NextRequest, _ev: NextFetchEvent) => {
+  const handler = withLogtail((_req: NextRequest, _ev: NextFetchEvent) => {
     return NextResponse.next();
   });
   expect(handler).toBeInstanceOf(Function);
   // TODO: Make sure we don't have a NextApiHandler
 });
 
-test('withAxiom(NextConfig) with fallback rewrites (regression test for #21)', async () => {
-  process.env.AXIOM_INGEST_ENDPOINT = 'http://localhost';
+test('withLogtail(NextConfig) with fallback rewrites (regression test for #21)', async () => {
+  process.env.LOGTAIL_SOURCE_TOKEN = 'http://localhost';
 
   const rewrites = async () => {
     return {
@@ -51,19 +51,19 @@ test('withAxiom(NextConfig) with fallback rewrites (regression test for #21)', a
     };
   };
 
-  const config = withAxiom({
+  const config = withLogtail({
     rewrites: rewrites as any,
   });
   if (config.rewrites) await config.rewrites();
 });
 
-test('withAxiom(GetServerSideProps)', async () => {
+test('withLogtail(GetServerSideProps)', async () => {
   const getServerSideProps: GetServerSideProps = async (context: GetServerSidePropsContext) => {
     return {
       props: {},
     };
   };
-  const handler = withAxiomGetServerSideProps(getServerSideProps);
+  const handler = withLogtailGetServerSideProps(getServerSideProps);
   expect(handler).toBeInstanceOf(Function);
-  // TODO: Make sure we have a AxiomGetServerSideProps
+  // TODO: Make sure we have a LogtailGetServerSideProps
 });

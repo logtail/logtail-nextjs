@@ -1,4 +1,4 @@
-import { log } from 'next-axiom'
+import { log } from 'next-logtail'
 import { GetStaticProps } from 'next'
 import useSWR, { BareFetcher } from 'swr'
 

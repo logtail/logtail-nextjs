@@ -1,9 +1,9 @@
 import {NextFetchEvent, NextResponse} from 'next/server'
-import {AxiomRequest, log, withAxiom} from 'next-axiom'
+import {LogtailRequest, log, withLogtail} from 'next-logtail'
 
-async function middleware(req: AxiomRequest, ev: NextFetchEvent) {
+async function middleware(req: LogtailRequest, ev: NextFetchEvent) {
   req.log.info("Hello from middleware", { 'bar': 'baz' });
   return NextResponse.next()
 }
 
-export default withAxiom(middleware)
+export default withLogtail(middleware)

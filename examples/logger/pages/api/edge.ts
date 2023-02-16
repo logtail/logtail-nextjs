@@ -1,10 +1,10 @@
-import { withAxiom, AxiomRequest } from 'next-axiom'
+import { withLogtail, LogtailRequest } from 'next-logtail'
 
 export const config = {
     runtime: 'experimental-edge',
 };
 
-function handler(req: AxiomRequest) {
+function handler(req: LogtailRequest) {
     req.log.debug("message from edge", { foo: 'bar' })
 
     return new Response(
@@ -21,4 +21,4 @@ function handler(req: AxiomRequest) {
 }
 
 
-export default withAxiom(handler);
+export default withLogtail(handler);

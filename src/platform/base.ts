@@ -6,11 +6,11 @@ import { EndpointType } from '../shared';
 // configrations per provider, and the functions that are used by the logger. Implement
 // this interface to have special behaviour for your platform.
 export default interface Provider {
-  shoudSendEdgeReport: boolean;
+  shouldSendEdgeReport: boolean;
   token: string | undefined;
   environment: string;
   region: string | undefined;
-  axiomUrl: string | undefined;
+  logtailUrl: string | undefined;
 
   isEnvVarsSet(): boolean;
   getIngestURL(t: EndpointType): string;

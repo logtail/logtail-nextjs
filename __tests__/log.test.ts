@@ -1,8 +1,8 @@
 /**
  * @jest-environment jsdom
  */
-// set axiom env vars before importing logger
-process.env.AXIOM_INGEST_ENDPOINT = 'https://example.co/api/test';
+// set logtail env vars before importing logger
+process.env.LOGTAIL_SOURCE_TOKEN = 'very_secret_token';
 import { log } from '../src/logger';
 
 jest.useFakeTimers();

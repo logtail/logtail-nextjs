@@ -20,7 +20,7 @@ declare global {
   var EdgeRuntime: string;
 }
 
-export function withAxiomNextConfig(nextConfig: NextConfig): NextConfig {
+export function withLogtailNextConfig(nextConfig: NextConfig): NextConfig {
   return {
     ...nextConfig,
     rewrites: async () => {
@@ -31,14 +31,14 @@ export function withAxiomNextConfig(nextConfig: NextConfig): NextConfig {
       if (!webVitalsEndpoint && !logsEndpoint) {
         const log = new Logger();
         log.warn(
-          'axiom: Envvars not detected. If this is production please see https://github.com/axiomhq/next-axiom for help'
+          'logtail: Envvars not detected. If this is production please see https://github.com/logtailhq/next-logtail for help'
         );
-        log.warn('axiom: Sending Web Vitals to /dev/null');
-        log.warn('axiom: Sending logs to console');
+        log.warn('logtail: Sending Web Vitals to /dev/null');
+        log.warn('logtail: Sending logs to console');
         return rewrites || []; // nothing to do
       }
 
-      const axiomRewrites: Rewrite[] = [
+      const logtailRewrites: Rewrite[] = [
         {
           source: `${config.proxyPath}/web-vitals`,
           destination: webVitalsEndpoint,
@@ -52,11 +52,11 @@ export function withAxiomNextConfig(nextConfig: NextConfig): NextConfig {
       ];
 
       if (!rewrites) {
-        return axiomRewrites;
+        return logtailRewrites;
       } else if (Array.isArray(rewrites)) {
-        return rewrites.concat(axiomRewrites);
+        return rewrites.concat(logtailRewrites);
       } else {
-        rewrites.afterFiles = (rewrites.afterFiles || []).concat(axiomRewrites);
+        rewrites.afterFiles = (rewrites.afterFiles || []).concat(logtailRewrites);
         return rewrites;
       }
     },
@@ -66,7 +66,7 @@ export function withAxiomNextConfig(nextConfig: NextConfig): NextConfig {
 // Sending logs after res.{json,send,end} is very unreliable.
 // This function overwrites these functions and makes sure logs are sent out
 // before the response is sent.
-function interceptNextApiResponse(req: AxiomAPIRequest, res: NextApiResponse): [NextApiResponse, Promise<void>[]] {
+function interceptNextApiResponse(req: LogtailAPIRequest, res: NextApiResponse): [NextApiResponse, Promise<void>[]] {
   const allPromises: Promise<void>[] = [];
 
   const resSend = res.send;
@@ -106,22 +106,22 @@ function interceptNextApiResponse(req: AxiomAPIRequest, res: NextApiResponse): [
   return [res, allPromises];
 }
 
-export type AxiomAPIRequest = NextApiRequest & { log: Logger };
-export type AxiomApiHandler = (
-  request: AxiomAPIRequest,
+export type LogtailAPIRequest = NextApiRequest & { log: Logger };
+export type LogtailApiHandler = (
+  request: LogtailAPIRequest,
   response: NextApiResponse
 ) => NextApiHandler | Promise<NextApiHandler> | Promise<void>;
 
-export function withAxiomNextApiHandler(handler: AxiomApiHandler): NextApiHandler {
+export function withLogtailNextApiHandler(handler: LogtailApiHandler): NextApiHandler {
   return async (req, res) => {
     const report: RequestReport = config.generateRequestMeta(req);
     const logger = new Logger({}, report, false, 'lambda');
-    const axiomRequest = req as AxiomAPIRequest;
-    axiomRequest.log = logger;
-    const [wrappedRes, allPromises] = interceptNextApiResponse(axiomRequest, res);
+    const logtailRequest = req as LogtailAPIRequest;
+    logtailRequest.log = logger;
+    const [wrappedRes, allPromises] = interceptNextApiResponse(logtailRequest, res);
 
     try {
-      await handler(axiomRequest, wrappedRes);
+      await handler(logtailRequest, wrappedRes);
       await logger.flush();
       await Promise.all(allPromises);
     } catch (error: any) {
@@ -134,25 +134,25 @@ export function withAxiomNextApiHandler(handler: AxiomApiHandler): NextApiHandle
   };
 }
 
-export type AxiomGetServerSidePropsContext<
+export type LogtailGetServerSidePropsContext<
   Q extends ParsedUrlQuery = ParsedUrlQuery,
   D extends PreviewData = PreviewData
 > = GetServerSidePropsContext<Q, D> & { log: Logger };
-export type AxiomGetServerSideProps<
+export type LogtailGetServerSideProps<
   P extends { [key: string]: any } = { [key: string]: any },
   Q extends ParsedUrlQuery = ParsedUrlQuery,
   D extends PreviewData = PreviewData
-> = (context: AxiomGetServerSidePropsContext<Q, D>) => Promise<GetServerSidePropsResult<P>>;
+> = (context: LogtailGetServerSidePropsContext<Q, D>) => Promise<GetServerSidePropsResult<P>>;
 
-export function withAxiomNextServerSidePropsHandler(handler: AxiomGetServerSideProps): GetServerSideProps {
+export function withLogtailNextServerSidePropsHandler(handler: LogtailGetServerSideProps): GetServerSideProps {
   return async (context) => {
     const report: RequestReport = config.generateRequestMeta(context.req);
     const logger = new Logger({}, report, false, 'lambda');
-    const axiomContext = context as AxiomGetServerSidePropsContext;
-    axiomContext.log = logger;
+    const logtailContext = context as LogtailGetServerSidePropsContext;
+    logtailContext.log = logger;
 
     try {
-      const result = await handler(axiomContext);
+      const result = await handler(logtailContext);
       await logger.flush();
       return result;
     } catch (error: any) {
@@ -164,13 +164,13 @@ export function withAxiomNextServerSidePropsHandler(handler: AxiomGetServerSideP
   };
 }
 
-export type AxiomRequest = NextRequest & { log: Logger };
-export type AxiomMiddleware = (
-  request: AxiomRequest,
+export type LogtailRequest = NextRequest & { log: Logger };
+export type LogtailMiddleware = (
+  request: LogtailRequest,
   event: NextFetchEvent
 ) => NextMiddlewareResult | Promise<NextMiddlewareResult>;
 
-export function withAxiomNextEdgeFunction(handler: NextMiddleware): NextMiddleware {
+export function withLogtailNextEdgeFunction(handler: NextMiddleware): NextMiddleware {
   return async (req, ev) => {
     const report: RequestReport = {
       startTime: new Date().getTime(),
@@ -184,11 +184,11 @@ export function withAxiomNextEdgeFunction(handler: NextMiddleware): NextMiddlewa
     };
 
     const logger = new Logger({}, report, false, 'edge');
-    const axiomRequest = req as AxiomRequest;
-    axiomRequest.log = logger;
+    const logtailRequest = req as LogtailRequest;
+    logtailRequest.log = logger;
 
     try {
-      const res = await handler(axiomRequest, ev);
+      const res = await handler(logtailRequest, ev);
       if (res) {
         logger.attachResponseStatus(res.status);
       }
@@ -206,37 +206,37 @@ export function withAxiomNextEdgeFunction(handler: NextMiddleware): NextMiddlewa
 }
 
 function logEdgeReport(report: any) {
-  if (config.shoudSendEdgeReport) {
-    console.log(`AXIOM_EDGE_REPORT::${JSON.stringify(report)}`);
+  if (config.shouldSendEdgeReport) {
+    console.log(`LOGTAIL_EDGE_REPORT::${JSON.stringify(report)}`);
   }
 }
 
-type WithAxiomParam = NextConfig | AxiomApiHandler | NextMiddleware;
+type WithLogtailParam = NextConfig | LogtailApiHandler | NextMiddleware;
 
-function isNextConfig(param: WithAxiomParam): param is NextConfig {
+function isNextConfig(param: WithLogtailParam): param is NextConfig {
   return typeof param == 'object';
 }
 
-function isApiHandler(param: WithAxiomParam): param is AxiomApiHandler {
+function isApiHandler(param: WithLogtailParam): param is LogtailApiHandler {
   const isFunction = typeof param == 'function';
 
   // Vercel defines EdgeRuntime for edge functions, but Netlify defines NEXT_RUNTIME = 'edge'
   return isFunction && typeof globalThis.EdgeRuntime === 'undefined' && process.env.NEXT_RUNTIME != 'edge';
 }
 
-// withAxiom can be called either with NextConfig, which will add proxy rewrites
+// withLogtail can be called either with NextConfig, which will add proxy rewrites
 // to improve deliverability of Web-Vitals and logs, or with NextApiRequest or
 // NextMiddleware which will automatically log exceptions and flush logs.
-export function withAxiom(param: NextConfig): NextConfig;
-export function withAxiom(param: AxiomApiHandler): NextApiHandler;
-export function withAxiom(param: NextMiddleware): NextMiddleware;
-export function withAxiom(param: WithAxiomParam) {
+export function withLogtail(param: NextConfig): NextConfig;
+export function withLogtail(param: LogtailApiHandler): NextApiHandler;
+export function withLogtail(param: NextMiddleware): NextMiddleware;
+export function withLogtail(param: WithLogtailParam) {
   if (isNextConfig(param)) {
-    return withAxiomNextConfig(param);
+    return withLogtailNextConfig(param);
   } else if (isApiHandler(param)) {
-    return withAxiomNextApiHandler(param);
+    return withLogtailNextApiHandler(param);
   } else {
-    return withAxiomNextEdgeFunction(param);
+    return withLogtailNextEdgeFunction(param);
   }
 }
-export const withAxiomGetServerSideProps = withAxiomNextServerSidePropsHandler;
+export const withLogtailGetServerSideProps = withLogtailNextServerSidePropsHandler;

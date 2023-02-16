@@ -2,12 +2,10 @@
  * @jest-environment jsdom
  */
 
-// clear Axiom env vars
-process.env.AXIOM_URL = '';
-process.env.AXIOM_DATASET = '';
-process.env.AXIOM_TOKEN = '';
-process.env.AXIOM_INGEST_ENDPOINT = '';
-process.env.NEXT_PUBLIC_AXIOM_INGEST_ENDPOINT = '';
+// clear Logtail env vars
+process.env.LOGTAIL_URL = '';
+process.env.LOGTAIL_SOURCE_TOKEN = '';
+process.env.NEXT_PUBLIC_LOGTAIL_SOURCE_TOKEN = '';
 import { NextWebVitalsMetric } from 'next/app';
 import { log } from '../src/logger';
 import { reportWebVitals } from '../src/webVitals';

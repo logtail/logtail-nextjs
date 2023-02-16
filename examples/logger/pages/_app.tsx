@@ -1,7 +1,7 @@
-import { log } from 'next-axiom'
+import { log } from 'next-logtail'
 import {AppProps} from "next/app";
 
-export { reportWebVitals } from 'next-axiom'
+export { reportWebVitals } from 'next-logtail'
 
 log.info('Hello from frontend', { foo: 'bar' })
 

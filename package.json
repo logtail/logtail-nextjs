@@ -1,13 +1,9 @@
 {
-  "name": "next-axiom",
-  "description": "Send WebVitals from your Next.js project to Axiom.",
-  "version": "0.17.0",
-  "author": "Axiom, Inc.",
+  "name": "@logtail/next",
+  "description": "Send structured logs and WebVitals from your Next.js project to Logtail.",
+  "version": "0.1.0-rc1",
+  "author": "Better Stack <hello@betterstack.com>",
   "license": "MIT",
-  "contributors": [
-    "Arne Bahlo <arne@axiom.co>",
-    "Islam Shehata <islam@axiom.co>"
-  ],
   "engines": {
     "node": ">=15"
   },
@@ -22,19 +18,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/axiomhq/next-axiom.git"
+    "url": "git+https://github.com/logtail/logtail-nextjs.git"
   },
   "keywords": [
     "web-vitals",
-    "axiom",
+    "logtail",
     "observability",
     "performance",
     "nextjs"
   ],
   "bugs": {
-    "url": "https://github.com/axiomhq/next-axiom/issues"
+    "url": "https://github.com/logtail/logtail-nextjs/issues"
   },
-  "homepage": "https://github.com/axiomhq/next-axiom#readme",
+  "homepage": "https://github.com/logtail/logtail-nextjs#readme",
   "peerDependencies": {
     "next": "^12.1.4 || ^13"
   },

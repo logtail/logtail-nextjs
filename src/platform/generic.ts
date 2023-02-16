@@ -6,29 +6,28 @@ import type Provider from "./base";
 // This is the generic config class for all platforms that doesn't have a special
 // implementation (e.g: vercel, netlify). All config classes extends this one.
 export default class GenericConfig implements Provider {
-  proxyPath = '/_axiom';
+  proxyPath = '/_logtail';
   isBrowser = typeof window !== 'undefined';
-  shoudSendEdgeReport = false;
-  token = process.env.AXIOM_TOKEN;
-  dataset = process.env.AXIOM_DATASET;
+  shouldSendEdgeReport = false;
+  token = process.env.LOGTAIL_SOURCE_TOKEN;
   environment: string = process.env.NODE_ENV;
-  axiomUrl = process.env.AXIOM_URL || 'https://cloud.axiom.co';
+  logtailUrl = process.env.LOGTAIL_URL || 'https://in.logtail.com';
   region = process.env.REGION || undefined;
 
   isEnvVarsSet(): boolean {
-    return !!(this.axiomUrl && process.env.AXIOM_DATASET && process.env.AXIOM_TOKEN);
+    return !!(this.logtailUrl && process.env.LOGTAIL_SOURCE_TOKEN);
   }
 
   getIngestURL(_: EndpointType): string {
-    return `${this.axiomUrl}/api/v1/datasets/${this.dataset}/ingest`;
+    return `${this.logtailUrl}`;
   }
 
   getLogsEndpoint(): string {
-    return this.isBrowser ? `${this.proxyPath}/logs` : this.getIngestURL(EndpointType.logs);
+    return this.isBrowser ? `${this.proxyPath}` : this.getIngestURL(EndpointType.logs);
   }
 
   getWebVitalsEndpoint(): string {
-    return this.isBrowser ? `${this.proxyPath}/logs` : this.getIngestURL(EndpointType.webVitals);
+    return this.isBrowser ? `${this.proxyPath}` : this.getIngestURL(EndpointType.webVitals);
   }
 
   wrapWebVitalsObject(metrics: any[]): any {
