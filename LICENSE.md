@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2022 Axiom, Inc.
+Copyright (c) 2022 Axiom, Inc.  
 Copyright (c) 2022 Better Stack, Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
