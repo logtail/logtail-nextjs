@@ -44,7 +44,7 @@ test('throttled sendMetrics', async () => {
     headers: {
       'Content-Type': 'application/json',
       'User-Agent': 'next-logtail/v' + Version,
-      'Authorization': 'Bearer ' + token
+      Authorization: 'Bearer ' + token,
     },
     method: 'POST',
     keepalive: true,
