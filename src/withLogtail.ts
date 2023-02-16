@@ -42,7 +42,7 @@ export function withLogtailNextConfig(nextConfig: NextConfig): NextConfig {
           source: config.proxyPath,
           destination: proxyEndpoint,
           basePath: false,
-        }
+        },
       ];
 
       if (!rewrites) {
