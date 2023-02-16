@@ -1,7 +1,7 @@
 {
   "name": "@logtail/next",
-  "description": "Send structured logs and WebVitals from your Next.js project to Logtail.",
-  "version": "0.1.0-rc1",
+  "description": "Logtail Next.js client by Better Stack",
+  "version": "0.17.1-rc1",
   "author": "Better Stack <hello@betterstack.com>",
   "license": "MIT",
   "engines": {
