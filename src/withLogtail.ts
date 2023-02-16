@@ -13,7 +13,7 @@ import { NextMiddlewareResult } from 'next/dist/server/web/types';
 import { ParsedUrlQuery } from 'querystring';
 import { Logger, RequestReport } from './logger';
 import { Rewrite } from 'next/dist/lib/load-custom-routes';
-import { EndpointType } from './shared';
+// import { EndpointType } from './shared';
 import config from './config';
 
 declare global {
@@ -26,9 +26,8 @@ export function withLogtailNextConfig(nextConfig: NextConfig): NextConfig {
     rewrites: async () => {
       const rewrites = await nextConfig.rewrites?.();
 
-      const webVitalsEndpoint = config.getIngestURL(EndpointType.webVitals);
-      const logsEndpoint = config.getIngestURL(EndpointType.logs);
-      if (!webVitalsEndpoint && !logsEndpoint) {
+      const proxyEndpoint = config.getProxyEndpoint();
+      if (!proxyEndpoint) {
         const log = new Logger();
         log.warn(
           'logtail: Envvars not detected. If this is production please see https://github.com/logtailhq/next-logtail for help'
@@ -40,15 +39,10 @@ export function withLogtailNextConfig(nextConfig: NextConfig): NextConfig {
 
       const logtailRewrites: Rewrite[] = [
         {
-          source: `${config.proxyPath}/web-vitals`,
-          destination: webVitalsEndpoint,
+          source: config.proxyPath,
+          destination: proxyEndpoint,
           basePath: false,
-        },
-        {
-          source: `${config.proxyPath}/logs`,
-          destination: logsEndpoint,
-          basePath: false,
-        },
+        }
       ];
 
       if (!rewrites) {

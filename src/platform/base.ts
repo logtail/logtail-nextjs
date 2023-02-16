@@ -14,6 +14,7 @@ export default interface Provider {
 
   isEnvVarsSet(): boolean;
   getIngestURL(t: EndpointType): string;
+  getProxyEndpoint(): string;
   wrapWebVitalsObject(metrics: NextWebVitalsMetric[]): any;
   injectPlatformMetadata(logEvent: any, source: string): void;
   generateRequestMeta(req: any): RequestReport;

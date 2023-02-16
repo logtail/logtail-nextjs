@@ -3,6 +3,8 @@ import { LogEvent, RequestReport } from "../logger";
 import { EndpointType } from "../shared";
 import type Provider from "./base";
 
+const port = "6516";
+
 // This is the generic config class for all platforms that doesn't have a special
 // implementation (e.g: vercel, netlify). All config classes extends this one.
 export default class GenericConfig implements Provider {
@@ -19,15 +21,25 @@ export default class GenericConfig implements Provider {
   }
 
   getIngestURL(_: EndpointType): string {
-    return `${this.logtailUrl}`;
+    return this.logtailUrl;
+  }
+
+  getProxyEndpoint(): string {
+    if (this.token === undefined || this.token === "") {
+      return ""
+    }
+    const url = new URL(this.logtailUrl);
+    url.port = port;
+    url.searchParams.set('source_token', this.token);
+    return url.toString();
   }
 
   getLogsEndpoint(): string {
-    return this.isBrowser ? `${this.proxyPath}` : this.getIngestURL(EndpointType.logs);
+    return this.isBrowser ? this.proxyPath : this.getIngestURL(EndpointType.logs);
   }
 
   getWebVitalsEndpoint(): string {
-    return this.isBrowser ? `${this.proxyPath}` : this.getIngestURL(EndpointType.webVitals);
+    return this.isBrowser ? this.proxyPath : this.getIngestURL(EndpointType.webVitals);
   }
 
   wrapWebVitalsObject(metrics: any[]): any {
