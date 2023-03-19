@@ -30,7 +30,7 @@ export function withLogtailNextConfig(nextConfig: NextConfig): NextConfig {
       if (!proxyEndpoint) {
         const log = new Logger();
         log.warn(
-          'logtail: Envvars not detected. If this is production please see https://github.com/logtailhq/next-logtail for help'
+          'logtail: Envvars not detected. If this is production please see https://github.com/logtail/logtail-nextjs for help'
         );
         log.warn('logtail: Sending Web Vitals to /dev/null');
         log.warn('logtail: Sending logs to console');
