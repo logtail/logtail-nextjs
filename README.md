@@ -1,7 +1,8 @@
-# [Logtail](https://betterstack.com/logtail) Next.js client by [Better Stack](https://betterstack.com/)
+# [Better Stack](https://betterstack.com/logs) Next.js client
 
-[![Logtail dashboard](https://user-images.githubusercontent.com/19272921/154085622-59997d5a-3f91-4bc9-a815-3b8ead16d28d.jpeg)](https://betterstack.com/logtail)
+📣 Logtail is now part of Better Stack. [Learn more ⇗](https://betterstack.com/press/introducing-better-stack/)
 
+[![Better Stack dashboard](https://github.com/logtail/logtail-python/assets/10132717/e2a1196b-7924-4abc-9b85-055e17b5d499)](https://betterstack.com/logs)
 
 [![MIT License](https://img.shields.io/badge/license-MIT-ff69b4.svg)](https://github.com/logtail/logtail-nextjs/blob/master/LICENSE.md)
 [![npm @logtail/next](https://img.shields.io/npm/v/@logtail/next?color=success&label=npm%20%40logtail%2Fnext)](https://www.npmjs.com/package/@logtail/next)
