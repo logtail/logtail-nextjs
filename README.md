@@ -6,6 +6,7 @@
 
 [![MIT License](https://img.shields.io/badge/license-MIT-ff69b4.svg)](https://github.com/logtail/logtail-nextjs/blob/master/LICENSE.md)
 [![npm @logtail/next](https://img.shields.io/npm/v/@logtail/next?color=success&label=npm%20%40logtail%2Fnext)](https://www.npmjs.com/package/@logtail/next)
+[![CI](https://github.com/logtail/logtail-nextjs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/logtail/logtail-nextjs/actions/workflows/ci.yml)
 
 Experience SQL-compatible structured log management based on ClickHouse. [Learn more ⇗](https://logtail.com/)
 
