@@ -36,12 +36,15 @@ jobs:
           - 18.x
           - 19.x
           - 20.x
+        install-cmd:
+          - npm install
+          - npm update
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
-      - run: npm install
+      - run: ${{ matrix.install-cmd }}
       - run: npm run build
       - run: npm test
   publish:
