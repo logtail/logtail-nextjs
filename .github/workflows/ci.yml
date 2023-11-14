@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - main
@@ -18,42 +19,39 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 17
+          node-version: 20
       - run: npm install
       - run: npm run check-format
-  unittests:
-    name: Check Tests
+  build-and-test:
+    name: Build and Test
     runs-on: ubuntu-latest
     env:
       LOGTAIL_SOURCE_TOKEN: https://example.co/api/test
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 17
-      - run: npm install
-      - run: npm test
-  build:
-    name: Build
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         node:
           - 15.x
           - 16.x
           - 17.x
+          - 18.x
+          - 19.x
+          - 20.x
+        install-cmd:
+          - npm install
+          - npm update
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
-      - run: npm install
+      - run: ${{ matrix.install-cmd }}
       - run: npm run build
+      - run: npm test
   publish:
     name: Publish
     needs: 
       - check-format
-      - build
+      - build-and-test
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
