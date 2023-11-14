@@ -20,6 +20,25 @@ declare global {
   var EdgeRuntime: string;
 }
 
+function warnAboutMissingEnvironmentVariables() {
+  let checkEnabled = process.env.NODE_ENV !== 'development';
+  if (process.env.LOGTAIL_CHECK_ENV_VARS?.toLowerCase() === 'true' || process.env.LOGTAIL_CHECK_ENV_VARS === '1') {
+    checkEnabled = true;
+  }
+  if (process.env.LOGTAIL_CHECK_ENV_VARS?.toLowerCase() === 'false' || process.env.LOGTAIL_CHECK_ENV_VARS === '0') {
+    checkEnabled = false;
+  }
+
+  if (checkEnabled) {
+    const log = new Logger();
+    log.warn(
+        'logtail: Envvars not detected. If this is production please see https://github.com/logtail/logtail-nextjs for help'
+    );
+    log.warn('logtail: Sending Web Vitals to /dev/null');
+    log.warn('logtail: Sending logs to console');
+  }
+}
+
 export function withLogtailNextConfig(nextConfig: NextConfig): NextConfig {
   return {
     ...nextConfig,
@@ -28,12 +47,8 @@ export function withLogtailNextConfig(nextConfig: NextConfig): NextConfig {
 
       const proxyEndpoint = config.getProxyEndpoint();
       if (!proxyEndpoint) {
-        const log = new Logger();
-        log.warn(
-          'logtail: Envvars not detected. If this is production please see https://github.com/logtail/logtail-nextjs for help'
-        );
-        log.warn('logtail: Sending Web Vitals to /dev/null');
-        log.warn('logtail: Sending logs to console');
+        warnAboutMissingEnvironmentVariables();
+
         return rewrites || []; // nothing to do
       }
 
