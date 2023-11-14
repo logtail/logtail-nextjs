@@ -32,7 +32,7 @@ function warnAboutMissingEnvironmentVariables() {
   if (checkEnabled) {
     const log = new Logger();
     log.warn(
-        'logtail: Envvars not detected. If this is production please see https://github.com/logtail/logtail-nextjs for help'
+      'logtail: Envvars not detected. If this is production please see https://github.com/logtail/logtail-nextjs for help'
     );
     log.warn('logtail: Sending Web Vitals to /dev/null');
     log.warn('logtail: Sending logs to console');
