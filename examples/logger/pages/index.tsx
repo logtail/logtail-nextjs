@@ -1,31 +1,31 @@
-import { log } from 'next-logtail'
+import { log } from '@logtail/next'
 import { GetStaticProps } from 'next'
-import useSWR, { BareFetcher } from 'swr'
+import useSWR from 'swr'
 
 export const getStaticProps: GetStaticProps =  async (context) => {
-  log.info('Hello from SSR', { context })
+  log.debug('Log from Static Props getter', { context })
   return {
-    props: {},
+    props: { greeting: "Hello" },
   }
 }
 
-const fetcher = async (args: any[]) => {
-  console.log('Fetching', args)
-  log.info('Hello from SWR', { args });
-  // @ts-ignore
-  const res = await fetch(...args);
+const fetcher = async (url: string) => {
+  log.debug('Log from SWR fetcher function', { url });
+  const res = await fetch(url);
+
   return await res.json();
 }
 
-export default function Home() {
+export default function Home({ greeting }: { greeting: string }) {
   const { data, error } = useSWR('/api/hello', fetcher)
 
-  if (error) return <div>Failed to load</div>
-  if (!data) return <div>Loading...</div>
+  if (error) {
+    log.error("Failed to load", error)
+    return <h1>Failed to load: {error.message}</h1>
+  }
+  if (data) {
+    return <h1>{greeting}, {data.name}!</h1>
+  }
 
-  return (
-    <div>
-      <h1>{data.name}</h1>
-    </div>
-  )
+  return <h1>Loading...</h1>
 }

@@ -1,7 +1,7 @@
-import { withLogtailGetServerSideProps } from 'next-logtail';
+import { withLogtailGetServerSideProps } from '@logtail/next';
 
 export const getServerSideProps = withLogtailGetServerSideProps(async ({ req, log }) => {
-  log.info('Hello from server side');
+  log.debug('Log from server side props getter');
   return {
     props: {
       method: req.method,
@@ -12,7 +12,13 @@ export const getServerSideProps = withLogtailGetServerSideProps(async ({ req, lo
 export default function Home({ method }: { method: string }) {
   return (
     <div>
-      <h1>Hello from server, this is a {method} request</h1>
+      <h1>Hello from server, this is a {method} request.</h1>
+        <form method="get" action="">
+          <input type="submit" value="Make a GET request" />
+        </form>
+        <form method="post" action="">
+          <input type="submit" value="Make a POST request" />
+        </form>
     </div>
   );
 }

@@ -1,8 +1,8 @@
-import {NextFetchEvent, NextResponse} from 'next/server'
-import {LogtailRequest, log, withLogtail} from 'next-logtail'
+import { NextResponse } from 'next/server'
+import { LogtailRequest, withLogtail } from '@logtail/next'
 
-async function middleware(req: LogtailRequest, ev: NextFetchEvent) {
-  req.log.info("Hello from middleware", { 'bar': 'baz' });
+async function middleware(req: LogtailRequest) {
+  req.log.debug("Log from middleware");
   return NextResponse.next()
 }
 
