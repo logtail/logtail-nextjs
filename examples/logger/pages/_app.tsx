@@ -1,12 +1,19 @@
-import { log } from 'next-logtail'
-import {AppProps} from "next/app";
+import { log } from '@logtail/next'
+import { AppProps } from "next/app";
 
-export { reportWebVitals } from 'next-logtail'
+export { reportWebVitals } from '@logtail/next'
 
-log.info('Hello from frontend', { foo: 'bar' })
+log.info('Initializing MyApp')
 
 function MyApp({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />
+  return <>
+      <Component {...pageProps} />
+      <hr />
+      <ul>
+          <li><a href="/">Homepage</a></li>
+          <li><a href="/serverSideProps">Server side props demo</a></li>
+      </ul>
+  </>
 }
 
 export default MyApp

@@ -2,21 +2,40 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
-First, run the development server:
+First, install dependencies:
+```bash
+npm install
+# or
+yarn install
+```
+
+Then, run the development server with `LOGTAIL_SOURCE_TOKEN` environment variable (replace `yoursourcetoken` by your actual source token):
 
 ```bash
-npm run dev
+LOGTAIL_SOURCE_TOKEN=<source-token> npm run dev
 # or
-yarn dev
+LOGTAIL_SOURCE_TOKEN=<source-token> yarn dev
 ```
+
+_Don't forget to replace with your actual source token which you can find by going to logs.betterstack.com -> sources -> edit._
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+You can start editing the page by modifying files in `pages/`.
+The pages auto-update as you edit the file.
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [/api/hello](http://localhost:3000/api/hello) and [/api/edge](http://localhost:3000/api/edge).
+These endpoints can be edited in `pages/api/`.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+## Troubleshooting
+
+If you are using port 3000 for some other application, you can use a different port by running e.g.:
+
+```bash
+LOGTAIL_SOURCE_TOKEN=<source-token> PORT=3001 npm run dev
+# or
+LOGTAIL_SOURCE_TOKEN=<source-token> PORT=3001 yarn dev
+```
 
 ## Learn More
 

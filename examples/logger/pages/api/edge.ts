@@ -1,11 +1,12 @@
-import { withLogtail, LogtailRequest } from 'next-logtail'
+// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
+import { withLogtail, LogtailRequest } from '@logtail/next'
 
 export const config = {
     runtime: 'experimental-edge',
 };
 
 function handler(req: LogtailRequest) {
-    req.log.debug("message from edge", { foo: 'bar' })
+    req.log.debug("Log from edge runtime API function", { req })
 
     return new Response(
         JSON.stringify({
