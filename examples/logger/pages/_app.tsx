@@ -1,5 +1,6 @@
 import { log } from '@logtail/next'
 import { AppProps } from "next/app";
+import Link from "next/link";
 
 export { reportWebVitals } from '@logtail/next'
 
@@ -10,8 +11,8 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Component {...pageProps} />
       <hr />
       <ul>
-          <li><a href="/">Homepage</a></li>
-          <li><a href="/serverSideProps">Server side props demo</a></li>
+          <li><Link href="/">Homepage</Link></li>
+          <li><Link href="/serverSideProps">Server side props demo</Link></li>
       </ul>
   </>
 }
