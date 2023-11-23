@@ -1,7 +1,7 @@
 {
   "name": "@logtail/next",
   "description": "Logtail Next.js client by Better Stack",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "author": "Better Stack <hello@betterstack.com>",
   "license": "MIT",
   "engines": {
