@@ -21,10 +21,10 @@ declare global {
 }
 
 function warnAboutMissingEnvironmentVariables() {
-  const nodeEnvironment = process.env.NODE_ENV;
-  const vercelEnvironment = process.env.VERCEL_ENV;
-  let checkEnabled =
-    nodeEnvironment !== 'development' && vercelEnvironment !== 'preview' && vercelEnvironment !== 'development';
+  const nodeDevEnv = process.env.NODE_ENV === 'development';
+  const vercelDevEnv = process.env.VERCEL_ENV === 'preview' || process.env.VERCEL_ENV === 'development';
+  const vercelNonProdBuild = process.env.VERCEL_ENV !== 'production' && process.env.__VERCEL_BUILD_RUNNING === '1';
+  let checkEnabled = !nodeDevEnv && !vercelDevEnv && !vercelNonProdBuild;
   if (process.env.LOGTAIL_CHECK_ENV_VARS?.toLowerCase() === 'true' || process.env.LOGTAIL_CHECK_ENV_VARS === '1') {
     checkEnabled = true;
   }
