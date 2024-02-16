@@ -204,13 +204,13 @@ export function withLogtailNextEdgeFunction(handler: NextMiddleware): NextMiddle
       if (res) {
         logger.attachResponseStatus(res.status);
       }
-      ev.waitUntil(logger.flush());
+      await logger.flush();
       logEdgeReport(report);
       return res;
     } catch (error: any) {
       logger.error('Error in edge function', { error });
       logger.attachResponseStatus(500);
-      ev.waitUntil(logger.flush());
+      await logger.flush();
       logEdgeReport(report);
       throw error;
     }
