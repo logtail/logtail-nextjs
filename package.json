@@ -32,7 +32,7 @@
   },
   "homepage": "https://github.com/logtail/logtail-nextjs#readme",
   "peerDependencies": {
-    "next": "^12.1.4 || ^13 || ^14"
+    "next": "^12.1.4 || ^13 || ^14 || ^15"
   },
   "devDependencies": {
     "@types/jest": "^27.5.1",
