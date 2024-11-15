@@ -1,18 +1,18 @@
 import {
-  NextConfig,
-  NextApiHandler,
-  NextApiResponse,
-  NextApiRequest,
   GetServerSideProps,
   GetServerSidePropsContext,
-  PreviewData,
   GetServerSidePropsResult,
+  NextApiHandler,
+  NextApiRequest,
+  NextApiResponse,
+  NextConfig,
+  PreviewData,
 } from 'next';
-import { NextFetchEvent, NextMiddleware, NextRequest } from 'next/server';
+import { Rewrite } from 'next/dist/lib/load-custom-routes';
 import { NextMiddlewareResult } from 'next/dist/server/web/types';
+import { NextFetchEvent, NextMiddleware, NextRequest } from 'next/server';
 import { ParsedUrlQuery } from 'querystring';
 import { Logger, RequestReport } from './logger';
-import { Rewrite } from 'next/dist/lib/load-custom-routes';
 // import { EndpointType } from './shared';
 import config from './config';
 
@@ -186,8 +186,8 @@ export function withLogtailNextEdgeFunction(handler: NextMiddleware): NextMiddle
   return async (req, ev) => {
     const report: RequestReport = {
       startTime: new Date().getTime(),
-      ip: req.ip,
-      region: req.geo?.region,
+      ip: (req as any).ip, // XXX: This is required as `ip` and `geo` have been removed in Next.js 15 and otherwise it wouldn't build
+      region: (req as any).geo?.region,
       host: req.nextUrl.host,
       method: req.method,
       path: req.nextUrl.pathname,
