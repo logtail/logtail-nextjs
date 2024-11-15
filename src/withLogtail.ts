@@ -1,18 +1,18 @@
 import {
+  NextConfig,
+  NextApiHandler,
+  NextApiResponse,
+  NextApiRequest,
   GetServerSideProps,
   GetServerSidePropsContext,
-  GetServerSidePropsResult,
-  NextApiHandler,
-  NextApiRequest,
-  NextApiResponse,
-  NextConfig,
   PreviewData,
+  GetServerSidePropsResult,
 } from 'next';
-import { Rewrite } from 'next/dist/lib/load-custom-routes';
-import { NextMiddlewareResult } from 'next/dist/server/web/types';
 import { NextFetchEvent, NextMiddleware, NextRequest } from 'next/server';
+import { NextMiddlewareResult } from 'next/dist/server/web/types';
 import { ParsedUrlQuery } from 'querystring';
 import { Logger, RequestReport } from './logger';
+import { Rewrite } from 'next/dist/lib/load-custom-routes';
 // import { EndpointType } from './shared';
 import config from './config';
 
