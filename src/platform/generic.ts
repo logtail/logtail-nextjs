@@ -13,7 +13,7 @@ export default class GenericConfig implements Provider {
   shouldSendEdgeReport = false;
   token = process.env.LOGTAIL_SOURCE_TOKEN;
   environment: string = process.env.NODE_ENV;
-  logtailUrl = process.env.LOGTAIL_URL || 'https://in.logtail.com';
+  logtailUrl = process.env.LOGTAIL_URL || 'https://in.logs.betterstack.com';
   region = process.env.REGION || undefined;
 
   isEnvVarsSet(): boolean {
