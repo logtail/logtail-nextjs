@@ -13,7 +13,7 @@ export default class GenericConfig implements Provider {
   shouldSendEdgeReport = false;
   token = process.env.LOGTAIL_SOURCE_TOKEN;
   environment: string = process.env.NODE_ENV;
-  logtailUrl = process.env.LOGTAIL_URL || 'https://in.logtail.com';
+  logtailUrl = process.env.LOGTAIL_URL || 'https://in.logs.betterstack.com';
   region = process.env.REGION || undefined;
 
   isEnvVarsSet(): boolean {
@@ -43,13 +43,15 @@ export default class GenericConfig implements Provider {
   }
 
   wrapWebVitalsObject(metrics: any[]): any {
+    const time = new Date().getTime();
     return metrics.map(m => ({
-        webVital: m,
-        _time: new Date().getTime(),
-        platform: {
-          environment: this.environment,
-          source: 'web-vital',
-        },
+      webVital: m,
+      dt: time,
+      _time: time,
+      platform: {
+        environment: this.environment,
+        source: 'web-vital',
+      },
     }))
   }
 

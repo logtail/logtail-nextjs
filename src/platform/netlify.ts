@@ -19,18 +19,20 @@ export interface NetlifyInfo extends PlatformInfo {
 export default class NetlifyConfig extends GenericConfig implements Provider {
 
   wrapWebVitalsObject(metrics: any[]): any {
+    const time = new Date().getTime();
     return metrics.map(m => ({
       webVital: m,
-        _time: new Date().getTime(),
-        netlify: {
-          environment: this.environment,
-          source: 'web-vital',
-          siteId: netlifySiteId,
-          buildId: netlifyBuildId,
-          context: netlifyContext,
-          deploymentUrl: netlifyDeploymentUrl,
-          deploymentId: netlifyDeploymentId,
-        },
+      dt: time,
+      _time: time,
+      netlify: {
+        environment: this.environment,
+        source: 'web-vital',
+        siteId: netlifySiteId,
+        buildId: netlifyBuildId,
+        context: netlifyContext,
+        deploymentUrl: netlifyDeploymentUrl,
+        deploymentId: netlifyDeploymentId,
+      },
     }))
   }
 
