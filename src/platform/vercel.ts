@@ -25,7 +25,9 @@ export default class VercelConfig extends GenericConfig implements Provider {
   // }
 
   wrapWebVitalsObject(metrics: any[]) {
+    const time = new Date().getTime();
     return {
+      dt: time,
       webVitals: metrics,
       environment: this.environment,
     };
