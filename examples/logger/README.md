@@ -3,21 +3,22 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 ## Getting Started
 
 First, install dependencies:
+
 ```bash
 npm install
 # or
 yarn install
 ```
 
-Then, run the development server with `LOGTAIL_SOURCE_TOKEN` environment variable (replace `yoursourcetoken` by your actual source token):
+Then, run the development server with `LOGTAIL_SOURCE_TOKEN` and `LOGTAIL_URL` environment variable:
 
 ```bash
-LOGTAIL_SOURCE_TOKEN=<source-token> npm run dev
+LOGTAIL_SOURCE_TOKEN=<source_token> LOGTAIL_URL=<ingesting_host> npm run dev
 # or
-LOGTAIL_SOURCE_TOKEN=<source-token> yarn dev
+LOGTAIL_SOURCE_TOKEN=<source_token> LOGTAIL_URL=<ingesting_host> yarn dev
 ```
 
-_Don't forget to replace with your actual source token which you can find by going to logs.betterstack.com -> sources -> edit._
+_Don't forget to replace `<source_token>` and `<ingesting_host>` with your actual source token and ingesting host which you can find by going to **[Sources](https://telemetry.betterstack.com/team/0/sources) -> Configure** in Better Stack._
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
@@ -32,9 +33,9 @@ These endpoints can be edited in `pages/api/`.
 If you are using port 3000 for some other application, you can use a different port by running e.g.:
 
 ```bash
-LOGTAIL_SOURCE_TOKEN=<source-token> PORT=3001 npm run dev
+LOGTAIL_SOURCE_TOKEN=<source_token> LOGTAIL_URL=<ingesting_host> PORT=3001 npm run dev
 # or
-LOGTAIL_SOURCE_TOKEN=<source-token> PORT=3001 yarn dev
+LOGTAIL_SOURCE_TOKEN=<source_token> LOGTAIL_URL=<ingesting_host> PORT=3001 yarn dev
 ```
 
 ## Learn More
