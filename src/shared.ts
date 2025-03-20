@@ -1,6 +1,6 @@
 import { type NextRequest } from 'next/server';
 
-export const isNoPrettyPrint = process.env.AXIOM_NO_PRETTY_PRINT == 'true' ? true : false;
+export const isNoPrettyPrint = process.env.BETTER_STACK_NO_PRETTY_PRINT == 'true' ? true : false;
 
 export enum EndpointType {
   webVitals = 'web-vitals',

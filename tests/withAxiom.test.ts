@@ -37,7 +37,7 @@ test('withAxiom(NextMiddleware)', async () => {
 });
 
 test('withAxiom(NextConfig) with fallback rewrites (regression test for #21)', async () => {
-  process.env.AXIOM_INGEST_ENDPOINT = 'http://localhost';
+  process.env.BETTER_STACK_INGEST_ENDPOINT = 'http://localhost';
 
   const rewrites = async () => {
     return {

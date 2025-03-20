@@ -7,21 +7,20 @@ import { isBrowser, isVercel } from "../config";
 // This is the generic config class for all platforms that doesn't have a special
 // implementation (e.g: vercel, netlify). All config classes extends this one.
 export default class GenericConfig implements Provider {
-  proxyPath = '/_axiom';
+  proxyPath = '/_betterstack';
   shouldSendEdgeReport = false;
-  token = process.env.NEXT_PUBLIC_AXIOM_TOKEN || process.env.AXIOM_TOKEN;
-  dataset = process.env.NEXT_PUBLIC_AXIOM_DATASET || process.env.AXIOM_DATASET;
+  token = process.env.NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN || process.env.BETTER_STACK_SOURCE_TOKEN || process.env.NEXT_PUBLIC_LOGTAIL_SOURCE_TOKEN || process.env.LOGTAIL_SOURCE_TOKEN;
   environment: string = process.env.NODE_ENV;
-  axiomUrl = process.env.NEXT_PUBLIC_AXIOM_URL || process.env.AXIOM_URL || 'https://api.axiom.co';
+  ingestingUrl = process.env.NEXT_PUBLIC_BETTER_STACK_INGESTING_URL || process.env.BETTER_STACK_INGESTING_URL || process.env.NEXT_PUBLIC_LOGTAIL_URL || process.env.LOGTAIL_URL;
   region = process.env.REGION || undefined;
-  customEndpoint: string | undefined = process.env.NEXT_PUBLIC_AXIOM_CUSTOM_ENDPOINT;
+  customEndpoint: string | undefined = process.env.NEXT_PUBLIC_BETTER_STACK_CUSTOM_ENDPOINT;
 
   isEnvVarsSet(): boolean {
-    return !!(this.axiomUrl && this.dataset && this.token) || !!this.customEndpoint;
+    return !!(this.ingestingUrl && this.token) || !!this.customEndpoint;
   }
 
   getIngestURL(_: EndpointType): string {
-    return `${this.axiomUrl}/v1/datasets/${this.dataset}/ingest`;
+    return `${this.ingestingUrl}`;
   }
 
   getLogsEndpoint(): string {

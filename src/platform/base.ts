@@ -9,7 +9,7 @@ export default interface Provider {
   token: string | undefined;
   environment: string;
   region: string | undefined;
-  axiomUrl: string | undefined;
+  ingestingUrl: string | undefined;
 
   isEnvVarsSet(): boolean;
   getIngestURL(t: EndpointType): string;

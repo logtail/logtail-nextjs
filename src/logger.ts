@@ -5,7 +5,7 @@ import { isNoPrettyPrint, requestToJSON, throttle, type RequestJSON } from './sh
 
 const url = config.getLogsEndpoint();
 
-const LOG_LEVEL = process.env.NEXT_PUBLIC_AXIOM_LOG_LEVEL || 'debug';
+const LOG_LEVEL = process.env.NEXT_PUBLIC_BETTER_STACK_LOG_LEVEL || 'debug';
 
 export interface LogEvent {
   level: string;
@@ -222,8 +222,7 @@ export class Logger {
 
     // To send logs over the network, we need one of:
     //
-    // - Axiom URL and Axiom dataset and Axiom token
-    // - Axiom Vercel ingest URL
+    // - Ingesting URL and source token
     // - Custom endpoint
     //
     // We fall back to printing to console to avoid network errors in

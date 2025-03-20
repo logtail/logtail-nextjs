@@ -4,10 +4,9 @@ import { mockFetchResponse } from './helpers';
 
 vi.hoisted(() => {
   // clear Axiom env vars
-  process.env.NEXT_PUBLIC_AXIOM_URL = '';
-  process.env.NEXT_PUBLIC_AXIOM_DATASET = '';
-  process.env.NEXT_PUBLIC_AXIOM_TOKEN = '';
-  process.env.NEXT_PUBLIC_AXIOM_INGEST_ENDPOINT = '';
+  process.env.NEXT_PUBLIC_BETTER_STACK_INGESTING_URL = '';
+  process.env.NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN = '';
+  process.env.NEXT_PUBLIC_BETTER_STACK_INGESTING_URL = '';
 });
 
 vi.useFakeTimers();

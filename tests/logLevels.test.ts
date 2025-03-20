@@ -3,8 +3,9 @@ import { log, Logger, LogLevel } from '../src/logger';
 
 vi.hoisted(() => {
   // stub axiom env vars before importing logger
-  vi.stubEnv('NEXT_PUBLIC_AXIOM_INGEST_ENDPOINT', 'https://example.co/api/test');
-  vi.stubEnv('NEXT_PUBLIC_AXIOM_LOG_LEVEL', 'error');
+  vi.stubEnv('NEXT_PUBLIC_BETTER_STACK_INGESTING_URL', 'https://s123.test.betterstackdata.com');
+  vi.stubEnv('NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN', 'mytoken');
+  vi.stubEnv('NEXT_PUBLIC_BETTER_STACK_LOG_LEVEL', 'error');
 });
 
 vi.useFakeTimers();

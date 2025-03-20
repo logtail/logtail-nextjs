@@ -3,7 +3,8 @@ import { test, expect, vi, vitest, Mock } from 'vitest';
 
 vi.hoisted(() => {
   // set axiom env vars before importing logger
-  vi.stubEnv('NEXT_PUBLIC_AXIOM_INGEST_ENDPOINT', 'https://example.co/api/test');
+  vi.stubEnv('NEXT_PUBLIC_BETTER_STACK_INGESTING_URL', 'https://example.co/api/test');
+  vi.stubEnv('NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN', 'mytoken');
 });
 
 vi.useFakeTimers();
