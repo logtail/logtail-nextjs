@@ -11,7 +11,7 @@ export interface LogEvent {
   level: string;
   message: string;
   fields: any;
-  _time: string;
+  dt: string;
   request?: RequestReport;
   git?: any;
   source: string;
@@ -118,7 +118,7 @@ export class Logger {
     const logEvent: LogEvent = {
       level: LogLevel[level].toString(),
       message,
-      _time: new Date(Date.now()).toISOString(),
+      dt: new Date(Date.now()).toISOString(),
       source: this.config.source!,
       fields: this.config.args || {},
       '@app': {

@@ -10,7 +10,7 @@ export default class VercelConfig extends GenericConfig implements Provider {
   wrapWebVitalsObject(metrics: any[]): any {
     return metrics.map(m => ({
       webVital: m,
-      _time: new Date().getTime(),
+      dt: new Date().getTime(),
       vercel: {
         environment: this.environment,
         source: 'web-vital',

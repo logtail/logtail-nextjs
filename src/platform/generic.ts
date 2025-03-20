@@ -20,7 +20,7 @@ export default class GenericConfig implements Provider {
   }
 
   getIngestURL(_: EndpointType): string {
-    return `${this.ingestingUrl}`;
+    return this.ingestingUrl || "";
   }
 
   getLogsEndpoint(): string {
@@ -42,7 +42,7 @@ export default class GenericConfig implements Provider {
   wrapWebVitalsObject(metrics: any[]): any {
     return metrics.map(m => ({
       webVital: m,
-      _time: new Date().getTime(),
+      dt: new Date().getTime(),
       platform: {
         environment: this.environment,
         source: 'web-vital',
