@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import {config, isBrowser, isVercel, Version} from './config';
+import { config, isBrowser, isVercel, Version } from './config';
 import { NetlifyInfo } from './platform/netlify';
 import { isNoPrettyPrint, requestToJSON, throttle, type RequestJSON } from './shared';
 
@@ -57,7 +57,7 @@ export interface PlatformInfo {
   project?: string;
   repo?: string;
   ref?: string;
-  git?: { commit?: string, repo?: string, ref?: string };
+  git?: { commit?: string; repo?: string; ref?: string };
 }
 
 export type LoggerConfig = {

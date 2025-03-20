@@ -119,10 +119,10 @@ export function withBetterStackRouteHandler(handler: NextHandler, config?: Bette
       // record the request
       if (!isVercel) {
         logger.logHttpRequest(
-            LogLevel.info,
-            `${req.method} ${report.path} ${report.statusCode} in ${report.endTime - report.startTime}ms`,
-            report,
-            {}
+          LogLevel.info,
+          `${req.method} ${report.path} ${report.statusCode} in ${report.endTime - report.startTime}ms`,
+          report,
+          {}
         );
       }
 
