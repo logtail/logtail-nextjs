@@ -1,19 +1,26 @@
-import config, { isVercel, Version } from './config';
+import { NextRequest } from 'next/server';
+import { config, isBrowser, isVercelIntegration, Version } from './config';
 import { NetlifyInfo } from './platform/netlify';
-import { isNoPrettyPrint, throttle } from './shared';
+import { isNoPrettyPrint, requestToJSON, throttle, type RequestJSON } from './shared';
 
 const url = config.getLogsEndpoint();
-const LOG_LEVEL = process.env.LOGTAIL_LOG_LEVEL || 'debug';
+
+const LOG_LEVEL = process.env.NEXT_PUBLIC_AXIOM_LOG_LEVEL || 'debug';
 
 export interface LogEvent {
   level: string;
   message: string;
-  fields: {};
+  fields: any;
   _time: string;
   request?: RequestReport;
+  git?: any;
+  source: string;
   platform?: PlatformInfo;
   vercel?: PlatformInfo;
   netlify?: NetlifyInfo;
+  '@app': {
+    'next-axiom-version': string;
+  };
 }
 
 export enum LogLevel {
@@ -26,14 +33,17 @@ export enum LogLevel {
 
 export interface RequestReport {
   startTime: number;
+  endTime: number;
   statusCode?: number;
-  ip?: string;
-  region?: string;
+  ip?: string | null;
+  region?: string | null;
   path: string;
-  host: string;
+  host?: string | null;
   method: string;
   scheme: string;
   userAgent?: string | null;
+  durationMs?: number;
+  details?: RequestJSON;
 }
 
 export interface PlatformInfo {
@@ -41,54 +51,81 @@ export interface PlatformInfo {
   region?: string;
   route?: string;
   source?: string;
+  deploymentId?: string;
+  deploymentUrl?: string;
+  commit?: string;
+  project?: string;
+  repo?: string;
+  ref?: string;
 }
+
+export type LoggerConfig = {
+  args?: { [key: string]: any };
+  logLevel?: LogLevel;
+  autoFlush?: boolean;
+  source?: string;
+  req?: any;
+  prettyPrint?: typeof prettyPrint;
+};
 
 export class Logger {
   public logEvents: LogEvent[] = [];
   throttledSendLogs = throttle(this.sendLogs, 1000);
   children: Logger[] = [];
-  public logLevel: string;
+  public logLevel: LogLevel = LogLevel.debug;
+  public config: LoggerConfig = {
+    autoFlush: true,
+    source: 'frontend-log',
+    prettyPrint: prettyPrint,
+  };
 
-  constructor(
-    private args: { [key: string]: any } = {},
-    private req: RequestReport | null = null,
-    private autoFlush: Boolean = true,
-    public source: 'frontend' | 'lambda' | 'edge' = 'frontend',
-    logLevel?: string
-  ) {
-    this.logLevel = logLevel || LOG_LEVEL || 'debug';
+  constructor(public initConfig: LoggerConfig = {}) {
+    // check if user passed a log level, if not the default init value will be used as is.
+    if (this.initConfig.logLevel != undefined && this.initConfig.logLevel >= 0) {
+      this.logLevel = this.initConfig.logLevel;
+    } else if (LOG_LEVEL) {
+      this.logLevel = LogLevel[LOG_LEVEL as keyof typeof LogLevel];
+    }
+    this.config = { ...this.config, ...initConfig };
   }
 
   debug = (message: string, args: { [key: string]: any } = {}) => {
-    this._log('debug', message, args);
+    this.log(LogLevel.debug, message, args);
   };
   info = (message: string, args: { [key: string]: any } = {}) => {
-    this._log('info', message, args);
+    this.log(LogLevel.info, message, args);
   };
   warn = (message: string, args: { [key: string]: any } = {}) => {
-    this._log('warn', message, args);
+    this.log(LogLevel.warn, message, args);
   };
   error = (message: string, args: { [key: string]: any } = {}) => {
-    this._log('error', message, args);
+    this.log(LogLevel.error, message, args);
   };
 
   with = (args: { [key: string]: any }) => {
-    const child = new Logger({ ...this.args, ...args }, this.req, this.autoFlush, this.source);
+    const config = { ...this.config, args: { ...this.config.args, ...args } };
+    const child = new Logger(config);
     this.children.push(child);
     return child;
   };
 
-  withRequest = (req: RequestReport) => {
-    return new Logger({ ...this.args }, req, this.autoFlush, this.source);
+  withRequest = (req: any) => {
+    return new Logger({ ...this.config, req: { ...this.config.req, ...req } });
   };
 
-  _log = (level: string, message: string, args: { [key: string]: any } = {}) => {
-    if (LogLevel[level] < LogLevel[this.logLevel]) {
-      return;
-    }
-    const logEvent: LogEvent = { level, message, _time: new Date(Date.now()).toISOString(), fields: this.args || {} };
+  private _transformEvent = (level: LogLevel, message: string, args: { [key: string]: any } = {}) => {
+    const logEvent: LogEvent = {
+      level: LogLevel[level].toString(),
+      message,
+      _time: new Date(Date.now()).toISOString(),
+      source: this.config.source!,
+      fields: this.config.args || {},
+      '@app': {
+        'next-axiom-version': Version,
+      },
+    };
 
-    // check if passed args is an object, if it's not an object, add it to fields.args
+    // check if passed args is an object, if its not an object, add it to fields.args
     if (args instanceof Error) {
       logEvent.fields = { ...logEvent.fields, message: args.message, stack: args.stack, name: args.name };
     } else if (typeof args === 'object' && args !== null && Object.keys(args).length > 0) {
@@ -98,19 +135,73 @@ export class Logger {
       logEvent.fields = { ...logEvent.fields, args: args };
     }
 
-    config.injectPlatformMetadata(logEvent, this.source);
+    config.injectPlatformMetadata(logEvent, this.config.source!);
 
-    if (this.req != null) {
-      logEvent.request = this.req;
+    if (this.config.req != null) {
+      logEvent.request = this.config.req;
       if (logEvent.platform) {
-        logEvent.platform.route = this.req.path;
+        logEvent.platform.route = this.config.req.path;
       } else if (logEvent.vercel) {
-        logEvent.vercel.route = this.req.path;
+        logEvent.vercel.route = this.config.req.path;
       }
     }
 
+    return logEvent;
+  };
+
+  logHttpRequest(level: LogLevel, message: string, request: any, args: any) {
+    const logEvent = this._transformEvent(level, message, args);
+    logEvent.request = request;
     this.logEvents.push(logEvent);
-    if (this.autoFlush) {
+    if (this.config.autoFlush) {
+      this.throttledSendLogs();
+    }
+  }
+
+  middleware<
+    TConfig extends { logRequestDetails?: boolean | (keyof RequestJSON)[] },
+    TReturn = TConfig['logRequestDetails'] extends boolean | (keyof RequestJSON)[] ? Promise<void> : void,
+  >(request: NextRequest, config?: TConfig): TReturn {
+    const req = {
+      ip: request.ip,
+      region: request.geo?.region,
+      method: request.method,
+      host: request.nextUrl.hostname,
+      path: request.nextUrl.pathname,
+      scheme: request.nextUrl.protocol.split(':')[0],
+      referer: request.headers.get('Referer'),
+      userAgent: request.headers.get('user-agent'),
+    };
+
+    const message = `${request.method} ${request.nextUrl.pathname}`;
+
+    if (config?.logRequestDetails) {
+      return requestToJSON(request).then((details) => {
+        const newReq = {
+          ...req,
+          details: Array.isArray(config.logRequestDetails)
+            ? (Object.fromEntries(
+                Object.entries(details as RequestJSON).filter(([key]) =>
+                  (config.logRequestDetails as (keyof RequestJSON)[]).includes(key as keyof RequestJSON)
+                )
+              ) as RequestJSON)
+            : details,
+        };
+        return this.logHttpRequest(LogLevel.info, message, newReq, {});
+      }) as TReturn;
+    }
+
+    return this.logHttpRequest(LogLevel.info, message, req, {}) as TReturn;
+  }
+
+  log = (level: LogLevel, message: string, args: { [key: string]: any } = {}) => {
+    if (level < this.logLevel) {
+      return;
+    }
+    const logEvent = this._transformEvent(level, message, args);
+
+    this.logEvents.push(logEvent);
+    if (this.config.autoFlush) {
       this.throttledSendLogs();
     }
   };
@@ -129,22 +220,28 @@ export class Logger {
       return;
     }
 
+    // To send logs over the network, we need one of:
+    //
+    // - Axiom URL and Axiom dataset and Axiom token
+    // - Axiom Vercel ingest URL
+    // - Custom endpoint
+    //
+    // We fall back to printing to console to avoid network errors in
+    // development environments.
     if (!config.isEnvVarsSet()) {
-      // if LOGTAIL SOURCE TOKEN is not set, fallback to printing to console
-      // to avoid network errors in development environments
-      this.logEvents.forEach((ev) => prettyPrint(ev));
+      this.logEvents.forEach((ev) => (this.config.prettyPrint ? this.config.prettyPrint(ev) : prettyPrint(ev)));
       this.logEvents = [];
       return;
     }
 
     const method = 'POST';
     const keepalive = true;
-    const body = JSON.stringify(this.logEvents.map((event) => ({ dt: event._time, ...event })));
+    const body = JSON.stringify(this.logEvents);
     // clear pending logs
     this.logEvents = [];
-    const headers = {
+    const headers: HeadersInit = {
       'Content-Type': 'application/json',
-      'User-Agent': 'logtail-nextjs/v' + Version,
+      'User-Agent': 'next-axiom/v' + Version,
     };
     if (config.token) {
       headers['Authorization'] = `Bearer ${config.token}`;
@@ -153,24 +250,32 @@ export class Logger {
 
     function sendFallback() {
       // Do not leak network errors; does not affect the running app
-      fetch(url, reqOptions).catch(console.error);
+      return fetch(url, reqOptions).catch(console.error);
     }
 
     try {
       if (typeof fetch === 'undefined') {
         const fetch = await require('whatwg-fetch');
-        fetch(url, reqOptions).catch(console.error);
-      } else if (config.isBrowser && isVercel && navigator.sendBeacon) {
+        return fetch(url, reqOptions).catch(console.error);
+      } else if (isBrowser && isVercelIntegration && navigator.sendBeacon) {
         // sendBeacon fails if message size is greater than 64kb, so
         // we fall back to fetch.
-        if (!navigator.sendBeacon(url, body)) {
-          sendFallback();
+        // Navigator has to be bound to ensure it does not error in some browsers
+        // https://xgwang.me/posts/you-may-not-know-beacon/#it-may-throw-error%2C-be-sure-to-catch
+        try {
+          if (!navigator.sendBeacon.bind(navigator)(url, body)) {
+            return sendFallback();
+          }
+        } catch (error) {
+          return sendFallback();
         }
       } else {
-        sendFallback();
+        return sendFallback();
       }
     } catch (e) {
-      console.error(`Failed to send logs to Logtail: ${e}`);
+      console.warn(`Failed to send logs to Axiom: ${e}`);
+      // put the log events back in the queue
+      this.logEvents = [...this.logEvents, JSON.parse(body)];
     }
   }
 
@@ -179,9 +284,9 @@ export class Logger {
   };
 }
 
-export const log = new Logger();
+export const log = new Logger({});
 
-const levelColors = {
+const levelColors: { [key: string]: any } = {
   info: {
     terminal: '32',
     browser: 'lightgreen',
@@ -218,7 +323,7 @@ export function prettyPrint(ev: LogEvent) {
   let msgString = '';
   let args: any[] = [ev.level, ev.message];
 
-  if (config.isBrowser) {
+  if (isBrowser) {
     msgString = '%c%s - %s';
     args = [`color: ${levelColors[ev.level].browser};`, ...args];
   } else {

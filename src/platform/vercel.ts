@@ -1,28 +1,44 @@
+import { isBrowser } from '../config';
 import { LogEvent } from '../logger';
-// import { EndpointType } from '../shared';
+import { EndpointType } from '../shared';
 import type Provider from './base';
 import GenericConfig from './generic';
 
-const sourceToken = process.env.NEXT_PUBLIC_LOGTAIL_SOURCE_TOKEN || process.env.LOGTAIL_SOURCE_TOKEN || '';
-// const port = "6516";
+const ingestEndpoint = process.env.NEXT_PUBLIC_AXIOM_INGEST_ENDPOINT || process.env.AXIOM_INGEST_ENDPOINT || '';
 
 export default class VercelConfig extends GenericConfig implements Provider {
   provider = 'vercel';
   shouldSendEdgeReport = true;
   region = process.env.VERCEL_REGION || undefined;
-  environment = process.env.VERCEL_ENV || process.env.NODE_ENV;
-  token = sourceToken;
+  environment = process.env.VERCEL_ENV || process.env.NODE_ENV || '';
+  token = undefined;
+  axiomUrl = ingestEndpoint;
 
-  isEnvVarsSet (): boolean {
-    return sourceToken != undefined && sourceToken != '';
+  isEnvVarsSet(): boolean {
+    return (ingestEndpoint != undefined && ingestEndpoint != '') || !!this.customEndpoint;
   }
 
-  // getIngestURL(t: EndpointType) {
-  //   const url = new URL(this.logtailUrl);
-  //   url.port = port;
-  //   url.searchParams.set('source_token', this.token);
-  //   return url.toString();
-  // }
+  getIngestURL(t: EndpointType) {
+    const url = new URL(this.axiomUrl);
+    url.searchParams.set('type', t.toString());
+    return url.toString();
+  }
+
+  getWebVitalsEndpoint(): string {
+    if (isBrowser && this.customEndpoint) {
+      return this.customEndpoint
+    }
+
+    return `${this.proxyPath}/web-vitals`;
+  }
+
+  getLogsEndpoint(): string {
+    if (isBrowser && this.customEndpoint) {
+      return this.customEndpoint
+    }
+
+    return isBrowser ? `${this.proxyPath}/logs` : this.getIngestURL(EndpointType.logs);
+  }
 
   wrapWebVitalsObject(metrics: any[]) {
     return {
