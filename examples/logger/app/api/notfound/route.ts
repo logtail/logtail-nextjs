@@ -5,5 +5,5 @@ export const runtime = 'nodejs';
 
 // test handling NEXT_NOT_FOUND error
 export const GET = withBetterStack(async (req: BetterStackRequest) => {
-    return notFound()
+  return notFound();
 });

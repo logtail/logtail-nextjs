@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useLogger, LogLevel } from "@logtail/next";
-import { usePathname } from "next/navigation";
+import { useLogger, LogLevel } from '@logtail/next';
+import { usePathname } from 'next/navigation';
 
 export default function ErrorPage({
   error,
 }: {
   error: Error & { digest?: string };
 }) {
-  const pathname = usePathname()
-  const log = useLogger({ source: "error.tsx" });
-  let status =  error.message == 'Invalid URL' ? 404 : 500;
+  const pathname = usePathname();
+  const log = useLogger({ source: 'error.tsx' });
+  let status = error.message == 'Invalid URL' ? 404 : 500;
 
   log.logHttpRequest(
     LogLevel.error,
@@ -28,9 +28,5 @@ export default function ErrorPage({
     },
   );
 
-  return (
-    <div>
-      Ops! An Error has occurred:{" "}
-    </div>
-  );
+  return <div>Ops! An Error has occurred: </div>;
 }

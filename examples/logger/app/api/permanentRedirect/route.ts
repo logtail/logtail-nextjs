@@ -5,5 +5,5 @@ export const runtime = 'nodejs';
 
 // test handling NEXT_REDIRECT error with status code 308
 export const GET = withBetterStack(async (req: BetterStackRequest) => {
-    return permanentRedirect('/')
+  return permanentRedirect('/');
 });
