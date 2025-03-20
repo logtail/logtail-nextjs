@@ -1,5 +1,5 @@
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
-import { withAxiomRouteHandler } from 'next-axiom';
+import { withAxiomRouteHandler } from '@logtail/next';
 import { type NextRequest } from 'next/server';
 
 import { appRouter } from '~/server/api/root';

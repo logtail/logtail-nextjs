@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "next": "^14.0.0",
-    "next-axiom": "file:../..",
+    "@logtail/next": "file:../..",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },

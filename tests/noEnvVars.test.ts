@@ -3,7 +3,6 @@ import { log } from '../src/logger';
 import { mockFetchResponse } from './helpers';
 
 vi.hoisted(() => {
-  // clear Axiom env vars
   process.env.NEXT_PUBLIC_BETTER_STACK_INGESTING_URL = '';
   process.env.NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN = '';
 });

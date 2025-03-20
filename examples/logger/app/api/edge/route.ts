@@ -1,4 +1,4 @@
-import { AxiomRequest, withAxiom } from 'next-axiom';
+import { AxiomRequest, withAxiom } from '@logtail/next';
 
 export const runtime = 'edge';
 

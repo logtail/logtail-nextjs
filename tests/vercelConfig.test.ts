@@ -16,7 +16,7 @@ test('reading vercel ingest endpoint', () => {
   expect(url).toEqual('https://s123.test.betterstackdata.com');
 });
 
-test('logging to Axiom when running on lambda', async () => {
+test('logging when running on lambda', async () => {
   vi.useFakeTimers();
   const mockedConsole = vi.spyOn(console, 'log');
   global.fetch = vi.fn(async () => {

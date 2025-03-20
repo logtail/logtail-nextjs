@@ -16,10 +16,10 @@ export function withAxiomNextConfig(nextConfig: NextConfig): NextConfig {
       if (!webVitalsEndpoint && !logsEndpoint) {
         const log = new Logger();
         log.warn(
-          'axiom: Envvars not detected. If this is production please see https://github.com/axiomhq/next-axiom for help'
+          'Envvars not detected. If this is production please see https://betterstack.com/docs/logs/javascript/nextjs/ for help'
         );
-        log.warn('axiom: Sending Web Vitals to /dev/null');
-        log.warn('axiom: Sending logs to console');
+        log.warn('Sending Web Vitals to /dev/null');
+        log.warn('Sending logs to console');
         return rewrites || []; // nothing to do
       }
 

@@ -1,4 +1,4 @@
-import { AxiomRequest, withAxiom } from 'next-axiom';
+import { AxiomRequest, withAxiom } from '@logtail/next';
 import { permanentRedirect } from 'next/navigation';
 
 export const runtime = 'nodejs';

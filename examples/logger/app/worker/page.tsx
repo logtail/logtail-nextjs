@@ -21,7 +21,7 @@ export default function WorkerPage() {
   return (
     <main className={styles.main}>
       <p>Do work in a WebWorker!</p>
-      <button onClick={handleWork}>Send Logs to Axiom</button>
+      <button onClick={handleWork}>Send Logs to Better Stack</button>
     </main>
   );
 }

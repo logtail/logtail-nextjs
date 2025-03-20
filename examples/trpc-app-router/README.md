@@ -1,6 +1,6 @@
-# next-axiom tRPC + App Router Example
+# @logtail/next tRPC + App Router Example
 
-This is an example for using next-axiom with the Next.js App Router and tRPC. It is based on `create-t3-app`.
+This is an example for using @logtail/next with the Next.js App Router and tRPC. It is based on `create-t3-app`.
 
 ## Setup
 
@@ -8,4 +8,4 @@ This is an example for using next-axiom with the Next.js App Router and tRPC. It
 - Add the ingesting URL and source token to `.env`
 - Run `npm install`
 - Run `npm run dev`
-- Visit `localhost:3000`. Your app should now be logging to Axiom.
+- Visit `localhost:3000`. Your app should now be logging to Better Stack.

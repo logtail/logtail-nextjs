@@ -1,5 +1,5 @@
 // This is a module worker, so we can use imports (in the browser too!)
-import { log } from 'next-axiom';
+import { log } from '@logtail/next';
 
 addEventListener('message', async (event: MessageEvent<number>) => {
   log.info('fired from worker');

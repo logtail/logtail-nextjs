@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useLogger } from 'next-axiom';
+import { useLogger } from '@logtail/next';
 
 import { api } from '~/trpc/react';
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useLogger, LogLevel } from "next-axiom";
+import { useLogger, LogLevel } from "@logtail/next";
 import { usePathname } from "next/navigation";
 
 export default function ErrorPage({

@@ -1,4 +1,4 @@
-import { Logger } from 'next-axiom'
+import { Logger } from '@logtail/next'
 import { NextResponse } from 'next/server'
 import type { NextFetchEvent, NextRequest } from 'next/server'
 

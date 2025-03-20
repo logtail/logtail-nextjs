@@ -1,6 +1,6 @@
 'use client';
 import './globals.css';
-import { AxiomWebVitals } from 'next-axiom';
+import { AxiomWebVitals } from '@logtail/next';
 
 export default function RootLayout({
   children,

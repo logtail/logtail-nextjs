@@ -1,6 +1,6 @@
 import { initTRPC } from '@trpc/server';
 import { type NextRequest } from 'next/server';
-import { type AxiomRequest, Logger } from 'next-axiom';
+import { type AxiomRequest, Logger } from '@logtail/next';
 import { type createTRPCContext } from './trpc';
 
 export type NextAxiomTRPCMiddlewareCtx = {

@@ -19,7 +19,7 @@ export interface LogEvent {
   vercel?: PlatformInfo;
   netlify?: NetlifyInfo;
   '@app': {
-    'next-axiom-version': string;
+    'next-logtail-version': string;
   };
 }
 
@@ -122,7 +122,7 @@ export class Logger {
       source: this.config.source!,
       fields: this.config.args || {},
       '@app': {
-        'next-axiom-version': Version,
+        'next-logtail-version': Version,
       },
     };
 
@@ -241,7 +241,7 @@ export class Logger {
     this.logEvents = [];
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
-      'User-Agent': 'next-axiom/v' + Version,
+      'User-Agent': 'next-logtail/v' + Version,
     };
     if (config.token) {
       headers['Authorization'] = `Bearer ${config.token}`;

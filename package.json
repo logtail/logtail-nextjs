@@ -18,19 +18,21 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/axiomhq/next-axiom.git"
+    "url": "git+https://github.com/logtail/logtail-nextjs.git"
   },
   "keywords": [
     "web-vitals",
-    "axiom",
+    "better-stack",
+    "logtail",
     "observability",
     "performance",
+    "telemetry",
     "nextjs"
   ],
   "bugs": {
-    "url": "https://github.com/axiomhq/next-axiom/issues"
+    "url": "https://github.com/logtail/logtail-nextjs/issues"
   },
-  "homepage": "https://github.com/axiomhq/next-axiom#readme",
+  "homepage": "https://github.com/logtail/logtail-nextjs#readme",
   "peerDependencies": {
     "next": ">=14.0",
     "react": ">=18.0.0"
