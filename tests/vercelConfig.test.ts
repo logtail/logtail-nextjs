@@ -4,7 +4,6 @@ import { EndpointType } from '../src/shared';
 import { Logger } from '../src/logger';
 
 vi.hoisted(() => {
-  process.env.NEXT_PUBLIC_BETTER_STACK_INGESTING_URL = undefined;
   process.env.NEXT_PUBLIC_BETTER_STACK_INGESTING_URL = 'https://s123.test.betterstackdata.com';
   process.env.NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN = 'mytoken';
 });

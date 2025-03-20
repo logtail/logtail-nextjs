@@ -2,7 +2,7 @@ import { GetServerSidePropsContext, NextApiRequest } from "next";
 import { LogEvent } from "../logger";
 import { EndpointType } from "../shared";
 import type Provider from "./base";
-import { isBrowser, isVercel } from "../config";
+import { isBrowser } from "../config";
 
 // This is the generic config class for all platforms that doesn't have a special
 // implementation (e.g: vercel, netlify). All config classes extends this one.
@@ -52,29 +52,12 @@ export default class GenericConfig implements Provider {
   }
 
   injectPlatformMetadata(logEvent: LogEvent, source: string) {
-    let key: "platform" | "vercel" | "netlify" = "platform"
-    if (isVercel) {
-      key = "vercel"
-    }
-
     logEvent.source = source;
-    logEvent[key] = {
+    logEvent.platform = {
       environment: this.environment,
       region: this.region,
       source: source,
     };
-
-    if (isVercel) {
-      logEvent[key]!.region = process.env.VERCEL_REGION;
-      logEvent[key]!.deploymentId = process.env.VERCEL_DEPLOYMENT_ID;
-      logEvent[key]!.deploymentUrl = process.env.NEXT_PUBLIC_VERCEL_URL;
-      logEvent[key]!.project = process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL;
-      logEvent.git = {
-        commit: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA,
-        repo: process.env.NEXT_PUBLIC_VERCEL_GIT_REPO_SLUG,
-        ref: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF,
-      }
-    }
   }
 
   getHeaderOrDefault(req: NextApiRequest | GetServerSidePropsContext['req'], headerName: string, defaultValue: any) {

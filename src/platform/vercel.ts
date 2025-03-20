@@ -1,36 +1,29 @@
-import { isBrowser } from '../config';
 import { LogEvent } from '../logger';
-import { EndpointType } from '../shared';
 import type Provider from './base';
 import GenericConfig from './generic';
 
 export default class VercelConfig extends GenericConfig implements Provider {
-  provider = 'vercel';
   shouldSendEdgeReport = true;
   region = process.env.VERCEL_REGION || undefined;
   environment = process.env.VERCEL_ENV || process.env.NODE_ENV || '';
 
-  getWebVitalsEndpoint(): string {
-    if (isBrowser && this.customEndpoint) {
-      return this.customEndpoint
-    }
-
-    return `${this.proxyPath}/web-vitals`;
-  }
-
-  getLogsEndpoint(): string {
-    if (isBrowser && this.customEndpoint) {
-      return this.customEndpoint
-    }
-
-    return isBrowser ? `${this.proxyPath}/logs` : this.getIngestURL(EndpointType.logs);
-  }
-
-  wrapWebVitalsObject(metrics: any[]) {
-    return {
-      webVitals: metrics,
-      environment: this.environment,
-    };
+  wrapWebVitalsObject(metrics: any[]): any {
+    return metrics.map(m => ({
+      webVital: m,
+      _time: new Date().getTime(),
+      vercel: {
+        environment: this.environment,
+        source: 'web-vital',
+        deploymentId: process.env.VERCEL_DEPLOYMENT_ID,
+        deploymentUrl: process.env.NEXT_PUBLIC_VERCEL_URL,
+        project: process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL,
+        git: {
+          commit: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA,
+          repo: process.env.NEXT_PUBLIC_VERCEL_GIT_REPO_SLUG,
+          ref: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF,
+        },
+      },
+    }))
   }
 
   injectPlatformMetadata(logEvent: LogEvent, source: string) {
@@ -38,6 +31,14 @@ export default class VercelConfig extends GenericConfig implements Provider {
       environment: this.environment,
       region: this.region,
       source: source,
+      deploymentId: process.env.VERCEL_DEPLOYMENT_ID,
+      deploymentUrl: process.env.NEXT_PUBLIC_VERCEL_URL,
+      project: process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL,
+      git: {
+        commit: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA,
+        repo: process.env.NEXT_PUBLIC_VERCEL_GIT_REPO_SLUG,
+        ref: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF,
+      },
     };
   }
 }

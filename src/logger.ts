@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { config, isBrowser, isVercelIntegration, Version } from './config';
+import {config, isBrowser, isVercel, Version} from './config';
 import { NetlifyInfo } from './platform/netlify';
 import { isNoPrettyPrint, requestToJSON, throttle, type RequestJSON } from './shared';
 
@@ -57,6 +57,7 @@ export interface PlatformInfo {
   project?: string;
   repo?: string;
   ref?: string;
+  git?: { commit?: string, repo?: string, ref?: string };
 }
 
 export type LoggerConfig = {
@@ -256,7 +257,7 @@ export class Logger {
       if (typeof fetch === 'undefined') {
         const fetch = await require('whatwg-fetch');
         return fetch(url, reqOptions).catch(console.error);
-      } else if (isBrowser && isVercelIntegration && navigator.sendBeacon) {
+      } else if (isBrowser && isVercel && navigator.sendBeacon) {
         // sendBeacon fails if message size is greater than 64kb, so
         // we fall back to fetch.
         // Navigator has to be bound to ensure it does not error in some browsers

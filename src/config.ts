@@ -23,7 +23,7 @@ export const isEdgeRuntime = globalThis.EdgeRuntime ? true : false;
 // Detect the platform provider, and return the appropriate config
 // fallback to generic config if no provider is detected
 let config = new GenericConfig();
-if (isVercelIntegration) {
+if (isVercel) {
   config = new VercelConfig();
 } else if (isNetlify) {
   config = new NetlifyConfig();

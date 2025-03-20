@@ -1,6 +1,6 @@
 import { NextConfig } from 'next';
 import { Rewrite } from 'next/dist/lib/load-custom-routes';
-import { config, isEdgeRuntime, isVercelIntegration } from './config';
+import { config, isEdgeRuntime, isVercel } from './config';
 import { LogLevel, Logger, RequestReport } from './logger';
 import { type NextRequest, type NextResponse } from 'next/server';
 import { EndpointType, RequestJSON, requestToJSON } from './shared';
@@ -104,7 +104,7 @@ export function withAxiomRouteHandler(handler: NextHandler, config?: AxiomRouteH
     const logger = new Logger({ req: report, source: isEdgeRuntime ? 'edge' : 'lambda' });
     // child logger to be used by the users within the handler
     const log = logger.with({});
-    log.config.source = `${isEdgeRuntime ? 'edge' : 'lambda'}${!isVercelIntegration ? '-log' : ''}`;
+    log.config.source = `${isEdgeRuntime ? 'edge' : 'lambda'}-log`;
     const axiomContext = req as AxiomRequest;
     const args = arg;
     axiomContext.log = log;
@@ -117,12 +117,12 @@ export function withAxiomRouteHandler(handler: NextHandler, config?: AxiomRouteH
       report.statusCode = result.status;
       report.durationMs = report.endTime - report.startTime;
       // record the request
-      if (!isVercelIntegration) {
+      if (!isVercel) {
         logger.logHttpRequest(
-          LogLevel.info,
-          `${req.method} ${report.path} ${report.statusCode} in ${report.endTime - report.startTime}ms`,
-          report,
-          {}
+            LogLevel.info,
+            `${req.method} ${report.path} ${report.statusCode} in ${report.endTime - report.startTime}ms`,
+            report,
+            {}
         );
       }
 
@@ -163,7 +163,7 @@ export function withAxiomRouteHandler(handler: NextHandler, config?: AxiomRouteH
       report.durationMs = report.endTime - report.startTime;
 
       // record the request
-      if (!isVercelIntegration) {
+      if (!isVercel) {
         logger.logHttpRequest(
           logLevel,
           `${req.method} ${report.path} ${report.statusCode} in ${report.endTime - report.startTime}ms`,
