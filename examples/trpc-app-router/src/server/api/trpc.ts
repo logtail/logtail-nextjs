@@ -11,9 +11,9 @@ import { type NextRequest } from 'next/server';
 import superjson from 'superjson';
 import { ZodError } from 'zod';
 import {
-  createAxiomPlugin,
-  type NextAxiomTRPCMiddlewareCtx,
-} from './axiom-trpc';
+  createBetterStackPlugin,
+  type NextBetterStackTRPCMiddlewareCtx,
+} from './better-stack-trpc';
 
 /**
  * 1. CONTEXT
@@ -54,14 +54,14 @@ export const createTRPCContext = (opts: { req: NextRequest }) => {
 
   return {
     req: opts.req,
-    axiomTRPCMeta: {
+    betterStackTRPCMeta: {
       foo: 'bar',
       randomNumber: Math.random(),
     },
     ...createInnerTRPCContext({
       headers: opts.req.headers,
     }),
-  } satisfies NextAxiomTRPCMiddlewareCtx;
+  } satisfies NextBetterStackTRPCMiddlewareCtx;
 };
 
 /**
@@ -101,10 +101,10 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
 export const createTRPCRouter = t.router;
 
 /**
- * Create a procedure with the axiomTRPCMiddleware already applied to extend other procedures from.
+ * Create a procedure with the betterStackTRPCMiddleware already applied to extend other procedures from.
  */
-const axiomPlugin = createAxiomPlugin();
-const baseProcedure = t.procedure.unstable_concat(axiomPlugin.axiomProcedure);
+const betterStackPlugin = createBetterStackPlugin();
+const baseProcedure = t.procedure.unstable_concat(betterStackPlugin.betterStackProcedure);
 
 /**
  * Public (unauthenticated) procedure

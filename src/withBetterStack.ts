@@ -5,7 +5,7 @@ import { LogLevel, Logger, RequestReport } from './logger';
 import { type NextRequest, type NextResponse } from 'next/server';
 import { EndpointType, RequestJSON, requestToJSON } from './shared';
 
-export function withAxiomNextConfig(nextConfig: NextConfig): NextConfig {
+export function withBetterStackNextConfig(nextConfig: NextConfig): NextConfig {
   return {
     ...nextConfig,
     rewrites: async () => {
@@ -23,7 +23,7 @@ export function withAxiomNextConfig(nextConfig: NextConfig): NextConfig {
         return rewrites || []; // nothing to do
       }
 
-      const axiomRewrites: Rewrite[] = [
+      const betterStackRewrites: Rewrite[] = [
         {
           source: `${config.proxyPath}/web-vitals`,
           destination: webVitalsEndpoint,
@@ -37,31 +37,31 @@ export function withAxiomNextConfig(nextConfig: NextConfig): NextConfig {
       ];
 
       if (!rewrites) {
-        return axiomRewrites;
+        return betterStackRewrites;
       } else if (Array.isArray(rewrites)) {
-        return rewrites.concat(axiomRewrites);
+        return rewrites.concat(betterStackRewrites);
       } else {
-        rewrites.afterFiles = (rewrites.afterFiles || []).concat(axiomRewrites);
+        rewrites.afterFiles = (rewrites.afterFiles || []).concat(betterStackRewrites);
         return rewrites;
       }
     },
   };
 }
 
-export type AxiomRequest = NextRequest & { log: Logger };
+export type BetterStackRequest = NextRequest & { log: Logger };
 type NextHandler<T = any> = (
-  req: AxiomRequest,
+  req: BetterStackRequest,
   arg?: T
 ) => Promise<Response> | Promise<NextResponse> | NextResponse | Response;
 
-type AxiomRouteHandlerConfig = {
+type BetterStackRouteHandlerConfig = {
   logRequestDetails?: boolean | (keyof RequestJSON)[];
   // override default log levels for notFound and redirect
   notFoundLogLevel?: LogLevel; // defaults to LogLevel.warn
   redirectLogLevel?: LogLevel; // defaults to LogLevel.info
 };
 
-export function withAxiomRouteHandler(handler: NextHandler, config?: AxiomRouteHandlerConfig): NextHandler {
+export function withBetterStackRouteHandler(handler: NextHandler, config?: BetterStackRouteHandlerConfig): NextHandler {
   return async (req: Request | NextRequest, arg: any) => {
     let region = '';
     if ('geo' in req) {
@@ -105,12 +105,12 @@ export function withAxiomRouteHandler(handler: NextHandler, config?: AxiomRouteH
     // child logger to be used by the users within the handler
     const log = logger.with({});
     log.config.source = `${isEdgeRuntime ? 'edge' : 'lambda'}-log`;
-    const axiomContext = req as AxiomRequest;
+    const betterStackContext = req as BetterStackRequest;
     const args = arg;
-    axiomContext.log = log;
+    betterStackContext.log = log;
 
     try {
-      const result = await handler(axiomContext, args);
+      const result = await handler(betterStackContext, args);
       report.endTime = new Date().getTime();
 
       // report log record
@@ -182,22 +182,22 @@ export function withAxiomRouteHandler(handler: NextHandler, config?: AxiomRouteH
   };
 }
 
-type WithAxiomParam = NextConfig | NextHandler;
+type WithBetterStackParam = NextConfig | NextHandler;
 
-function isNextConfig(param: WithAxiomParam): param is NextConfig {
+function isNextConfig(param: WithBetterStackParam): param is NextConfig {
   return typeof param == 'object';
 }
 
-// withAxiom can be called either with NextConfig, which will add proxy rewrites
+// withBetterStack can be called either with NextConfig, which will add proxy rewrites
 // to improve deliverability of Web-Vitals and logs.
-export function withAxiom(param: NextHandler, config?: AxiomRouteHandlerConfig): NextHandler;
-export function withAxiom(param: NextConfig): NextConfig;
-export function withAxiom(param: WithAxiomParam, config?: AxiomRouteHandlerConfig) {
+export function withBetterStack(param: NextHandler, config?: BetterStackRouteHandlerConfig): NextHandler;
+export function withBetterStack(param: NextConfig): NextConfig;
+export function withBetterStack(param: WithBetterStackParam, config?: BetterStackRouteHandlerConfig) {
   if (typeof param == 'function') {
-    return withAxiomRouteHandler(param, config);
+    return withBetterStackRouteHandler(param, config);
   } else if (isNextConfig(param)) {
-    return withAxiomNextConfig(param);
+    return withBetterStackNextConfig(param);
   }
 
-  return withAxiomRouteHandler(param, config);
+  return withBetterStackRouteHandler(param, config);
 }

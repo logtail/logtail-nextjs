@@ -34,7 +34,7 @@
   },
   "include": [
     "src/index.ts",
-    "src/withAxiom.ts",
+    "src/withBetterStack.ts",
     "src/webVitals/index.ts",
   ],
   "exclude": [

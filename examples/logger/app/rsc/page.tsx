@@ -5,7 +5,7 @@ import { Logger } from '@logtail/next';
 import Link from 'next/link';
 const inter = Inter({ subsets: ['latin'] });
 
-async function AxiomLoggerPage() {
+async function BetterStackLoggerPage() {
   const logger = new Logger();
   logger.info('RSC', { foo: 'bar' });
 
@@ -23,4 +23,4 @@ async function AxiomLoggerPage() {
   );
 }
 
-export default AxiomLoggerPage;
+export default BetterStackLoggerPage;

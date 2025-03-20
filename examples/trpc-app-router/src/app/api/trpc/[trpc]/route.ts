@@ -1,5 +1,5 @@
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
-import { withAxiomRouteHandler } from '@logtail/next';
+import { withBetterStackRouteHandler } from '@logtail/next';
 import { type NextRequest } from 'next/server';
 
 import { appRouter } from '~/server/api/root';
@@ -8,7 +8,7 @@ import { createTRPCContext } from '~/server/api/trpc';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const handler = withAxiomRouteHandler((req: NextRequest) =>
+const handler = withBetterStackRouteHandler((req: NextRequest) =>
   fetchRequestHandler({
     endpoint: '/api/trpc',
     req,

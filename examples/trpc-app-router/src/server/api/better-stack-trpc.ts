@@ -1,9 +1,9 @@
 import { initTRPC } from '@trpc/server';
 import { type NextRequest } from 'next/server';
-import { type AxiomRequest, Logger } from '@logtail/next';
+import { type BetterStackRequest, Logger } from '@logtail/next';
 import { type createTRPCContext } from './trpc';
 
-export type NextAxiomTRPCMiddlewareCtx = {
+export type NextBetterStackTRPCMiddlewareCtx = {
   /**
    * We are passing the entire req object. This means:
    * - we have access to it in the procedure
@@ -14,14 +14,14 @@ export type NextAxiomTRPCMiddlewareCtx = {
    * Anything you want to stick on all logs that are sent throughout the duration of the current procedure
    * This is currently not optional, but can pass an empty object.
    */
-  axiomTRPCMeta: Record<string, unknown>;
+  betterStackTRPCMeta: Record<string, unknown>;
 };
 
-function isAxiomRequest(req: unknown): req is AxiomRequest {
+function isBetterStackRequest(req: unknown): req is BetterStackRequest {
   return (req as NextRequest & { log: Logger }).log instanceof Logger;
 }
 
-export function createAxiomPlugin() {
+export function createBetterStackPlugin() {
   const t = initTRPC
     .context<typeof createTRPCContext>()
     // Add meta if required
@@ -29,16 +29,16 @@ export function createAxiomPlugin() {
     .create();
 
   return {
-    axiomProcedure: t.procedure.use((opts) => {
+    betterStackProcedure: t.procedure.use((opts) => {
       const req = opts.ctx.req;
 
-      if (!isAxiomRequest(req)) {
+      if (!isBetterStackRequest(req)) {
         throw new Error(
-          '`nextAxiomTRPCMiddleware` could not find logger. Did you forget to wrap your route handler in `withAxiom`? See: TODO: link to docs',
+          '`nextBetterStackTRPCMiddleware` could not find logger. Did you forget to wrap your route handler in `withBetterStack`? See: TODO: link to docs',
         );
       }
 
-      const log = req.log.with({ axiomTRPCMeta: opts.ctx.axiomTRPCMeta });
+      const log = req.log.with({ betterStackTRPCMeta: opts.ctx.betterStackTRPCMeta });
 
       return opts.next({
         ctx: { log },

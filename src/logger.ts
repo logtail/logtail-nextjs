@@ -273,7 +273,7 @@ export class Logger {
         return sendFallback();
       }
     } catch (e) {
-      console.warn(`Failed to send logs to Axiom: ${e}`);
+      console.warn(`Failed to send logs to BetterStack: ${e}`);
       // put the log events back in the queue
       this.logEvents = [...this.logEvents, JSON.parse(body)];
     }

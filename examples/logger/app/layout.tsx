@@ -1,6 +1,6 @@
 'use client';
 import './globals.css';
-import { AxiomWebVitals } from '@logtail/next';
+import { BetterStackWebVitals } from '@logtail/next';
 
 export default function RootLayout({
   children,
@@ -9,7 +9,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <AxiomWebVitals />
+      <BetterStackWebVitals />
       <body>{children}</body>
     </html>
   );

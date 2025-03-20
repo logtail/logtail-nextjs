@@ -1,42 +1,42 @@
 import { test, expect, vi } from 'vitest';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { NextFetchEvent, NextRequest, NextResponse } from 'next/server';
-import { withAxiom } from '../src/withAxiom';
+import { withBetterStack } from '../src/withBetterStack';
 import 'whatwg-fetch';
 
-test('withAxiom(NextConfig)', async () => {
-  const config = withAxiom({
+test('withBetterStack(NextConfig)', async () => {
+  const config = withBetterStack({
     reactStrictMode: true,
   });
   expect(config).toBeInstanceOf(Object);
 });
 
-test('withAxiom(NextApiHandler)', async () => {
-  const handler = withAxiom((_req: NextApiRequest, res: NextApiResponse) => {
+test('withBetterStack(NextApiHandler)', async () => {
+  const handler = withBetterStack((_req: NextApiRequest, res: NextApiResponse) => {
     res.status(200).end();
   });
   expect(handler).toBeInstanceOf(Function);
 });
 
-test('withAxiom(NextMiddleware)', async () => {
+test('withBetterStack(NextMiddleware)', async () => {
   process.env.LAMBDA_TASK_ROOT = 'lol'; // shhh this is AWS Lambda, I promise
-  const handler = withAxiom((_req: NextRequest, _ev: NextFetchEvent) => {
+  const handler = withBetterStack((_req: NextRequest, _ev: NextFetchEvent) => {
     return NextResponse.next();
   });
   expect(handler).toBeInstanceOf(Function);
   // TODO: Make sure we don't have a NextConfig
 });
 
-test('withAxiom(NextMiddleware)', async () => {
+test('withBetterStack(NextMiddleware)', async () => {
   process.env.LAMBDA_TASK_ROOT = 'lol'; // shhh this is AWS Lambda, I promise
-  const handler = withAxiom((_req: NextRequest, _ev: NextFetchEvent) => {
+  const handler = withBetterStack((_req: NextRequest, _ev: NextFetchEvent) => {
     return NextResponse.next();
   });
   expect(handler).toBeInstanceOf(Function);
   // TODO: Make sure we don't have a NextConfig
 });
 
-test('withAxiom(NextConfig) with fallback rewrites (regression test for #21)', async () => {
+test('withBetterStack(NextConfig) with fallback rewrites (regression test for #21)', async () => {
   process.env.BETTER_STACK_INGEST_ENDPOINT = 'http://localhost';
 
   const rewrites = async () => {
@@ -50,7 +50,7 @@ test('withAxiom(NextConfig) with fallback rewrites (regression test for #21)', a
     };
   };
 
-  const config = withAxiom({
+  const config = withBetterStack({
     rewrites: rewrites as any,
   });
   if (config.rewrites) await config.rewrites();
