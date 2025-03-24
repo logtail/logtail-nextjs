@@ -1,12 +1,16 @@
-export { reportWebVitals } from './webVitals';
-export { log, Logger } from './logger';
+export { log, Logger, LogLevel, type LoggerConfig, type RequestReport } from './logger';
+export { EndpointType, throttle } from './shared';
+export * from './platform/base';
+export * from './config';
 export {
-  withLogtail,
-  withLogtailGetServerSideProps,
-  LogtailAPIRequest,
-  LogtailRequest,
-  LogtailGetServerSideProps,
-  LogtailApiHandler,
-  LogtailMiddleware,
-  LogtailGetServerSidePropsContext,
-} from './withLogtail';
+  withBetterStack,
+  type BetterStackRequest,
+  withBetterStackNextConfig,
+  withBetterStackRouteHandler,
+  withBetterStack as withLogtail,
+  type BetterStackRequest as LogtailRequest,
+  withBetterStackNextConfig as withLogtailNextConfig,
+  withBetterStackRouteHandler as withLogtailRouteHandler,
+} from './withBetterStack';
+export * from './webVitals';
+export { useLogger } from './hooks';

@@ -19,20 +19,18 @@ export interface NetlifyInfo extends PlatformInfo {
 export default class NetlifyConfig extends GenericConfig implements Provider {
 
   wrapWebVitalsObject(metrics: any[]): any {
-    const time = new Date().getTime();
     return metrics.map(m => ({
       webVital: m,
-      dt: time,
-      _time: time,
-      netlify: {
-        environment: this.environment,
-        source: 'web-vital',
-        siteId: netlifySiteId,
-        buildId: netlifyBuildId,
-        context: netlifyContext,
-        deploymentUrl: netlifyDeploymentUrl,
-        deploymentId: netlifyDeploymentId,
-      },
+        dt: new Date().getTime(),
+        netlify: {
+          environment: this.environment,
+          source: 'web-vital',
+          siteId: netlifySiteId,
+          buildId: netlifyBuildId,
+          context: netlifyContext,
+          deploymentUrl: netlifyDeploymentUrl,
+          deploymentId: netlifyDeploymentId,
+        },
     }))
   }
 
@@ -40,7 +38,7 @@ export default class NetlifyConfig extends GenericConfig implements Provider {
     logEvent.netlify = {
       environment: this.environment,
       region: source === 'edge' ? process.env.DENO_REGION : process.env.AWS_REGION,
-      source: source + '-log',
+      source: source,
       siteId: netlifySiteId,
       buildId: netlifyBuildId,
       context: netlifyContext,

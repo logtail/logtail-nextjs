@@ -1,20 +1,20 @@
 {
   "name": "@logtail/next",
-  "description": "Logtail Next.js client by Better Stack",
-  "version": "0.1.7",
+  "description": "Better Stack Telemetry Next.js client",
+  "version": "0.2.0",
   "author": "Better Stack <hello@betterstack.com>",
   "license": "MIT",
   "engines": {
-    "node": ">=15"
+    "node": ">=18"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "format": "prettier --write src/*.ts __tests__/*.ts",
-    "check-format": "prettier -c src/*.ts __tests__/*.ts",
-    "test": "jest"
+    "format": "prettier --write src/*.ts tests/*.ts",
+    "check-format": "prettier -c src/*.ts tests/*.ts",
+    "test": "vitest run tests --coverage"
   },
   "repository": {
     "type": "git",
@@ -22,9 +22,11 @@
   },
   "keywords": [
     "web-vitals",
+    "better-stack",
     "logtail",
     "observability",
     "performance",
+    "telemetry",
     "nextjs"
   ],
   "bugs": {
@@ -32,19 +34,20 @@
   },
   "homepage": "https://github.com/logtail/logtail-nextjs#readme",
   "peerDependencies": {
-    "next": "^12.1.4 || ^13 || ^14 || ^15"
+    "next": ">=14.0",
+    "react": ">=18.0.0"
   },
   "devDependencies": {
-    "@types/jest": "^27.5.1",
-    "@types/node": "^17.0.29",
-    "jest": "^28.1.0",
-    "jest-environment-jsdom": "^28.1.0",
-    "prettier": "2.6.2",
-    "ts-jest": "^28.0.2",
-    "ts-node": "^10.8.0",
-    "typescript": "^4.6.4"
+    "@types/node": "^20.4.2",
+    "@types/react": "^18.2.15",
+    "@vitest/coverage-v8": "^2.1.5",
+    "prettier": "^3.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6",
+    "vitest": "^2.1.5"
   },
   "dependencies": {
-    "whatwg-fetch": "^3.6.2"
+    "whatwg-fetch": "^3.6.2",
+    "use-deep-compare": "^1.2.1"
   }
 }

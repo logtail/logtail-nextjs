@@ -1,10 +1,5 @@
-// @ts-check
-
 /** @type {import('next').NextConfig} */
-const { withLogtail } = require('@logtail/next');
+const { withBetterStack } = require('@logtail/next');
+const nextConfig = withBetterStack({});
 
-const nextConfig = withLogtail({
-  reactStrictMode: true,
-})
-
-module.exports = nextConfig
+module.exports = nextConfig;

@@ -2,41 +2,21 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
-First, install dependencies:
+First, run the development server:
 
 ```bash
-npm install
+npm run dev
 # or
-yarn install
-```
-
-Then, run the development server with `LOGTAIL_SOURCE_TOKEN` and `LOGTAIL_URL` environment variable:
-
-```bash
-LOGTAIL_SOURCE_TOKEN=<source_token> LOGTAIL_URL=<ingesting_host> npm run dev
+yarn dev
 # or
-LOGTAIL_SOURCE_TOKEN=<source_token> LOGTAIL_URL=<ingesting_host> yarn dev
+pnpm dev
 ```
-
-_Don't forget to replace `<source_token>` and `<ingesting_host>` with your actual source token and ingesting host which you can find by going to **[Sources](https://telemetry.betterstack.com/team/0/sources) -> Configure** in Better Stack._
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying files in `pages/`.
-The pages auto-update as you edit the file.
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [/api/hello](http://localhost:3000/api/hello) and [/api/edge](http://localhost:3000/api/edge).
-These endpoints can be edited in `pages/api/`.
-
-## Troubleshooting
-
-If you are using port 3000 for some other application, you can use a different port by running e.g.:
-
-```bash
-LOGTAIL_SOURCE_TOKEN=<source_token> LOGTAIL_URL=<ingesting_host> PORT=3001 npm run dev
-# or
-LOGTAIL_SOURCE_TOKEN=<source_token> LOGTAIL_URL=<ingesting_host> PORT=3001 yarn dev
-```
+This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
 ## Learn More
 
