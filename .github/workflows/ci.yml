@@ -32,10 +32,13 @@ jobs:
           - 18.x
           - 19.x
           - 20.x
+          - 21.x
           - 22.x
+          - 23.x
         install-cmd:
           - npm install
           - npm update
+      fail-fast: false
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
