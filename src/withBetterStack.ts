@@ -65,6 +65,7 @@ export function withBetterStackRouteHandler(handler: NextHandler, config?: Bette
   return async (req: Request | NextRequest, arg: any) => {
     let region = '';
     if ('geo' in req) {
+      // @ts-ignore NextRequest.ip was removed in Next 15, works with undefined
       region = req.geo?.region ?? '';
     }
 

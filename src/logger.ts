@@ -164,7 +164,9 @@ export class Logger {
     TReturn = TConfig['logRequestDetails'] extends boolean | (keyof RequestJSON)[] ? Promise<void> : void,
   >(request: NextRequest, config?: TConfig): TReturn {
     const req = {
+      // @ts-ignore NextRequest.ip was removed in Next 15, works with undefined
       ip: request.ip,
+      // @ts-ignore NextRequest.ip was removed in Next 15, works with undefined
       region: request.geo?.region,
       method: request.method,
       host: request.nextUrl.hostname,

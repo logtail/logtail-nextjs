@@ -134,9 +134,11 @@ export async function requestToJSON(request: Request | NextRequest): Promise<Req
 
   let ip: string | undefined;
   if ('ip' in request) {
+    // @ts-ignore NextRequest.ip was removed in Next 15, works with undefined
     ip = request.ip;
   }
 
+  // @ts-ignore NextRequest.ip was removed in Next 15, works with undefined
   let geo: NextRequest['geo'] | undefined;
   if ('geo' in request) {
     geo = request.geo;
