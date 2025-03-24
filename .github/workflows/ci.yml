@@ -47,7 +47,8 @@ jobs:
       - run: ${{ matrix.install-cmd }}
       - run: npm run build
       - run: npm test
-      - run: cd examples/logger && ${{ matrix.install-cmd }} && npm run build
+      - run: cd examples/logger && npm install && npm run build
+        if: ${{ matrix.install-cmd == 'npm install' }} # because of linked local dependency @logtail/next: file:../..
 
   publish:
     name: Publish
