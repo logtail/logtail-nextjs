@@ -112,15 +112,14 @@ export async function requestToJSON(request: Request | NextRequest): Promise<Req
   let body: RequestJSON['body'] | undefined;
   if (request.body) {
     try {
-      const clonedRequest = request.clone();
+      const bodyText = await request.text();
       try {
-        body = await clonedRequest.json();
-        clonedRequest.body?.getReader;
+        body = JSON.parse(bodyText);
       } catch {
-        body = await clonedRequest.text();
+        body = bodyText;
       }
     } catch (error) {
-      console.warn('Could not parse request body:', error);
+      console.warn("Could not parse request body:", error);
     }
   }
 
