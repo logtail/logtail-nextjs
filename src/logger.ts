@@ -151,6 +151,11 @@ export class Logger {
   };
 
   logHttpRequest(level: LogLevel, message: string, request: any, args: any) {
+    // Check log level before proceeding
+    if (level < this.logLevel || this.logLevel === LogLevel.off) {
+      return;
+    }
+
     const logEvent = this._transformEvent(level, message, args);
     logEvent.request = request;
     this.logEvents.push(logEvent);
@@ -198,11 +203,12 @@ export class Logger {
   }
 
   log = (level: LogLevel, message: string, args: { [key: string]: any } = {}) => {
-    if (level < this.logLevel) {
+    // Check log level before proceeding
+    if (level < this.logLevel || this.logLevel === LogLevel.off) {
       return;
     }
-    const logEvent = this._transformEvent(level, message, args);
 
+    const logEvent = this._transformEvent(level, message, args);
     this.logEvents.push(logEvent);
     if (this.config.autoFlush) {
       this.throttledSendLogs();
