@@ -10,10 +10,10 @@
     "prettier": "prettier --write ."
   },
   "dependencies": {
-    "next": "^15.5.3",
+    "next": "^14.0.0",
     "@logtail/next": "file:../..",
-    "react": "beta",
-    "react-dom": "beta"
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   },
   "browser": {
     "fs": false
