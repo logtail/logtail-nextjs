@@ -49,8 +49,12 @@ export function withBetterStackNextConfig(nextConfig: NextConfig): NextConfig {
 }
 
 export type BetterStackRequest = NextRequest & { log: Logger };
-type NextHandler<T = any> = (
+type BetterStackRouteHandler<T = any> = (
   req: BetterStackRequest,
+  arg?: T
+) => Promise<Response> | Promise<NextResponse> | NextResponse | Response;
+type NextHandler<T = any> = (
+  req: NextRequest,
   arg?: T
 ) => Promise<Response> | Promise<NextResponse> | NextResponse | Response;
 
@@ -61,7 +65,10 @@ type BetterStackRouteHandlerConfig = {
   redirectLogLevel?: LogLevel; // defaults to LogLevel.info
 };
 
-export function withBetterStackRouteHandler(handler: NextHandler, config?: BetterStackRouteHandlerConfig): NextHandler {
+export function withBetterStackRouteHandler(
+  handler: BetterStackRouteHandler,
+  config?: BetterStackRouteHandlerConfig
+): NextHandler {
   return async (req: Request | NextRequest, arg: any) => {
     let region = '';
     if ('geo' in req) {
@@ -183,7 +190,7 @@ export function withBetterStackRouteHandler(handler: NextHandler, config?: Bette
   };
 }
 
-type WithBetterStackParam = NextConfig | NextHandler;
+type WithBetterStackParam = NextConfig | BetterStackRouteHandler;
 
 function isNextConfig(param: WithBetterStackParam): param is NextConfig {
   return typeof param == 'object';
@@ -191,7 +198,7 @@ function isNextConfig(param: WithBetterStackParam): param is NextConfig {
 
 // withBetterStack can be called either with NextConfig, which will add proxy rewrites
 // to improve deliverability of Web-Vitals and logs.
-export function withBetterStack(param: NextHandler, config?: BetterStackRouteHandlerConfig): NextHandler;
+export function withBetterStack(param: BetterStackRouteHandler, config?: BetterStackRouteHandlerConfig): NextHandler;
 export function withBetterStack(param: NextConfig): NextConfig;
 export function withBetterStack(param: WithBetterStackParam, config?: BetterStackRouteHandlerConfig) {
   if (typeof param == 'function') {
