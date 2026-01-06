@@ -1,6 +1,7 @@
 'use client';
 
-import { useLogger, LogLevel } from '@logtail/next';
+import { LogLevel } from '@logtail/next';
+import { useLogger } from '@logtail/next/hooks';
 import { usePathname } from 'next/navigation';
 
 export default function ErrorPage({

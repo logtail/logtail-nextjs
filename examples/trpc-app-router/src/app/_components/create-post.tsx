@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useLogger } from '@logtail/next';
+import { useLogger } from '@logtail/next/hooks';
 
 import { api } from '~/trpc/react';
 

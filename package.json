@@ -1,7 +1,7 @@
 {
   "name": "@logtail/next",
   "description": "Better Stack Telemetry Next.js client",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "author": "Better Stack <hello@betterstack.com>",
   "license": "MIT",
   "engines": {
@@ -9,6 +9,23 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./hooks": {
+      "types": "./dist/hooks.d.ts",
+      "import": "./dist/hooks.js",
+      "require": "./dist/hooks.js"
+    },
+    "./webVitals": {
+      "types": "./dist/webVitals/index.d.ts",
+      "import": "./dist/webVitals/index.js",
+      "require": "./dist/webVitals/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
@@ -34,7 +51,7 @@
   },
   "homepage": "https://github.com/logtail/logtail-nextjs#readme",
   "peerDependencies": {
-    "next": ">=14.0",
+    "next": ">=15.0",
     "react": ">=18.0.0"
   },
   "devDependencies": {

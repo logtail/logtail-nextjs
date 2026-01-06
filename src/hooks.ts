@@ -3,6 +3,9 @@ import { Logger, LoggerConfig } from './logger';
 import { useEffect, useMemo } from 'react';
 import { useDeepCompareMemo } from 'use-deep-compare';
 
+// Re-export BetterStackWebVitals here for client-side usage
+export { BetterStackWebVitals } from './webVitals/components';
+
 export function useLogger(config: LoggerConfig = {}): Logger {
   const path = usePathname();
 

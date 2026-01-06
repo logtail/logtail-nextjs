@@ -167,21 +167,22 @@ export class Logger {
   middleware<
     TConfig extends { logRequestDetails?: boolean | (keyof RequestJSON)[] },
     TReturn = TConfig['logRequestDetails'] extends boolean | (keyof RequestJSON)[] ? Promise<void> : void,
-  >(request: NextRequest, config?: TConfig): TReturn {
+  >(request: NextRequest | Request, config?: TConfig): TReturn {
+    const nextRequest = request as NextRequest;
     const req = {
       // @ts-ignore NextRequest.ip was removed in Next 15, works with undefined
-      ip: request.ip,
+      ip: nextRequest.ip,
       // @ts-ignore NextRequest.ip was removed in Next 15, works with undefined
-      region: request.geo?.region,
-      method: request.method,
-      host: request.nextUrl.hostname,
-      path: request.nextUrl.pathname,
-      scheme: request.nextUrl.protocol.split(':')[0],
-      referer: request.headers.get('Referer'),
-      userAgent: request.headers.get('user-agent'),
+      region: nextRequest.geo?.region,
+      method: nextRequest.method,
+      host: nextRequest.nextUrl.hostname,
+      path: nextRequest.nextUrl.pathname,
+      scheme: nextRequest.nextUrl.protocol.split(':')[0],
+      referer: nextRequest.headers.get('Referer'),
+      userAgent: nextRequest.headers.get('user-agent'),
     };
 
-    const message = `${request.method} ${request.nextUrl.pathname}`;
+    const message = `${nextRequest.method} ${nextRequest.nextUrl.pathname}`;
 
     if (config?.logRequestDetails) {
       return requestToJSON(request).then((details) => {

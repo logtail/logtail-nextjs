@@ -1,6 +1,6 @@
 'use client';
 import './globals.css';
-import { BetterStackWebVitals } from '@logtail/next';
+import { BetterStackWebVitals } from '@logtail/next/webVitals';
 
 export default function RootLayout({
   children,
