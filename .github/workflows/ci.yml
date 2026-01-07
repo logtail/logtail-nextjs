@@ -19,7 +19,12 @@ jobs:
         with:
           node-version: 18
       - run: npm install
-      - run: npm run check-format
+      - name: Check format in library
+        run: npm run check-format
+      - name: Check format in logger example
+        run: cd examples/logger && npm install && npm run check-format
+      - name: Check format in rpc-app-router example
+        run: cd examples/trpc-app-router && npm install && npm run check-format
 
   build-and-test:
     name: Build and Test
