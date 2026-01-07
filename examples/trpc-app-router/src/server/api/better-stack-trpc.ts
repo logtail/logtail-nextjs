@@ -38,7 +38,9 @@ export function createBetterStackPlugin() {
         );
       }
 
-      const log = req.log.with({ betterStackTRPCMeta: opts.ctx.betterStackTRPCMeta });
+      const log = req.log.with({
+        betterStackTRPCMeta: opts.ctx.betterStackTRPCMeta,
+      });
 
       return opts.next({
         ctx: { log },

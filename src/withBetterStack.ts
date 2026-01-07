@@ -48,16 +48,16 @@ export function withBetterStackNextConfig(nextConfig: NextConfig): NextConfig {
   };
 }
 
-export type BetterStackRequest = Request & { log: Logger; nextUrl?: { hostname: string; pathname: string; protocol: string } };
+export type BetterStackRequest = Request & {
+  log: Logger;
+  nextUrl?: { hostname: string; pathname: string; protocol: string };
+};
 type NextHandler<T = any> = (
   req: BetterStackRequest,
   arg?: T
 ) => Promise<Response> | Promise<NextResponse> | NextResponse | Response;
 
-type RouteHandler = (
-  request: NextRequest,
-  context: any
-) => any;
+type RouteHandler = (request: NextRequest, context: any) => any;
 
 type BetterStackRouteHandlerConfig = {
   logRequestDetails?: boolean | (keyof RequestJSON)[];
@@ -66,7 +66,10 @@ type BetterStackRouteHandlerConfig = {
   redirectLogLevel?: LogLevel; // defaults to LogLevel.info
 };
 
-export function withBetterStackRouteHandler(handler: NextHandler, config?: BetterStackRouteHandlerConfig): RouteHandler {
+export function withBetterStackRouteHandler(
+  handler: NextHandler,
+  config?: BetterStackRouteHandlerConfig
+): RouteHandler {
   return async (request: NextRequest, context: any) => {
     let region = '';
     if ('geo' in request) {
@@ -109,9 +112,10 @@ export function withBetterStackRouteHandler(handler: NextHandler, config?: Bette
     betterStackContext.log = log;
 
     // Handle params Promise for Next.js 15+
-    const resolvedParams = context && typeof context === 'object' && 'params' in context && context.params instanceof Promise
-      ? { ...context, params: await context.params }
-      : context;
+    const resolvedParams =
+      context && typeof context === 'object' && 'params' in context && context.params instanceof Promise
+        ? { ...context, params: await context.params }
+        : context;
 
     try {
       const result = await handler(betterStackContext, resolvedParams);

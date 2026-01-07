@@ -104,7 +104,9 @@ export const createTRPCRouter = t.router;
  * Create a procedure with the betterStackTRPCMiddleware already applied to extend other procedures from.
  */
 const betterStackPlugin = createBetterStackPlugin();
-const baseProcedure = t.procedure.unstable_concat(betterStackPlugin.betterStackProcedure);
+const baseProcedure = t.procedure.unstable_concat(
+  betterStackPlugin.betterStackProcedure,
+);
 
 /**
  * Public (unauthenticated) procedure
