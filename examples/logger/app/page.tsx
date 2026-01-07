@@ -27,18 +27,22 @@ function Home() {
       action: 'button_click',
       button: 'debug',
       debugInfo: {
-        memory: (performance as any).memory ? {
-          usedJSHeapSize: (performance as any).memory.usedJSHeapSize,
-          totalJSHeapSize: (performance as any).memory.totalJSHeapSize,
-        } : 'unavailable',
+        memory: (performance as any).memory
+          ? {
+              usedJSHeapSize: (performance as any).memory.usedJSHeapSize,
+              totalJSHeapSize: (performance as any).memory.totalJSHeapSize,
+            }
+          : 'unavailable',
         viewport: {
           width: window.innerWidth,
           height: window.innerHeight,
         },
-        connection: (navigator as any).connection ? {
-          effectiveType: (navigator as any).connection.effectiveType,
-          downlink: (navigator as any).connection.downlink,
-        } : 'unavailable',
+        connection: (navigator as any).connection
+          ? {
+              effectiveType: (navigator as any).connection.effectiveType,
+              downlink: (navigator as any).connection.downlink,
+            }
+          : 'unavailable',
       },
       timestamp: new Date().toISOString(),
     });
@@ -79,7 +83,11 @@ function Home() {
         <h1 className={styles.title}>Better Stack Next.js Demo</h1>
         <p className={styles.subtitle}>
           Send a log and verify it shows up in{' '}
-          <Link href="https://telemetry.betterstack.com/team/0/tail" target="_blank" rel="noopener noreferrer">
+          <Link
+            href="https://telemetry.betterstack.com/team/0/tail"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Better Stack
           </Link>
           .
@@ -89,7 +97,9 @@ function Home() {
       <section className={styles.grid} aria-label="Examples">
         <article className={styles.card}>
           <h2 className={styles.cardTitle}>Info log</h2>
-          <p className={styles.cardBody}>Send a basic structured log from the browser.</p>
+          <p className={styles.cardBody}>
+            Send a basic structured log from the browser.
+          </p>
           <div className={styles.buttonRow}>
             <button type="button" onClick={logInfo} className={styles.button}>
               Send info
@@ -99,9 +109,15 @@ function Home() {
 
         <article className={styles.card}>
           <h2 className={styles.cardTitle}>Error log</h2>
-          <p className={styles.cardBody}>Send an error log including a stack trace.</p>
+          <p className={styles.cardBody}>
+            Send an error log including a stack trace.
+          </p>
           <div className={styles.buttonRow}>
-            <button type="button" onClick={logError} className={`${styles.button} ${styles.danger}`}>
+            <button
+              type="button"
+              onClick={logError}
+              className={`${styles.button} ${styles.danger}`}
+            >
               Send error
             </button>
           </div>
@@ -109,9 +125,15 @@ function Home() {
 
         <article className={styles.card}>
           <h2 className={styles.cardTitle}>Structured context</h2>
-          <p className={styles.cardBody}>Send a richer log with a nested context object.</p>
+          <p className={styles.cardBody}>
+            Send a richer log with a nested context object.
+          </p>
           <div className={styles.buttonRow}>
-            <button type="button" onClick={logWithContext} className={`${styles.button} ${styles.success}`}>
+            <button
+              type="button"
+              onClick={logWithContext}
+              className={`${styles.button} ${styles.success}`}
+            >
               Send structured log
             </button>
           </div>
@@ -119,9 +141,20 @@ function Home() {
 
         <article className={styles.card}>
           <h2 className={styles.cardTitle}>Debug log</h2>
-          <p className={styles.cardBody}>Set <span className={styles.code}>NEXT_PUBLIC_BETTER_STACK_LOG_LEVEL</span> to <span className={styles.code}>debug</span> to ensure debug logs will be forwarded.</p>
+          <p className={styles.cardBody}>
+            Set{' '}
+            <span className={styles.code}>
+              NEXT_PUBLIC_BETTER_STACK_LOG_LEVEL
+            </span>{' '}
+            to <span className={styles.code}>debug</span> to ensure debug logs
+            will be forwarded.
+          </p>
           <div className={styles.buttonRow}>
-            <button type="button" onClick={logDebug} className={`${styles.button} ${styles.debug}`}>
+            <button
+              type="button"
+              onClick={logDebug}
+              className={`${styles.button} ${styles.debug}`}
+            >
               Send debug
             </button>
           </div>
@@ -146,16 +179,23 @@ function Home() {
         <ol className={styles.list}>
           <li>
             Create a source in your{' '}
-            <Link href="https://telemetry.betterstack.com/team/0/sources" className={styles.link} target="_blank" rel="noopener noreferrer">
+            <Link
+              href="https://telemetry.betterstack.com/team/0/sources"
+              className={styles.link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Better Stack dashboard
             </Link>
             .
           </li>
           <li>
-            Copy the <span className={styles.code}>.env-example</span> template to <span className={styles.code}>.env</span>.
+            Copy the <span className={styles.code}>.env-example</span> template
+            to <span className={styles.code}>.env</span>.
           </li>
           <li>
-            Fill in the ingesting URL and source token in <span className={styles.code}>.env</span>.
+            Fill in the ingesting URL and source token in{' '}
+            <span className={styles.code}>.env</span>.
           </li>
         </ol>
       </section>

@@ -25,7 +25,7 @@ NEXT_PUBLIC_BETTER_STACK_INGESTING_URL="https://your-cluster.betterstackdata.com
 NEXT_PUBLIC_BETTER_STACK_LOG_LEVEL="info"
 ```
 
-You can create your source in  Better Stack -> Telemetry -> [Sources](https://telemetry.betterstack.com/team/0/sources).
+You can create your source in Better Stack -> Telemetry -> [Sources](https://telemetry.betterstack.com/team/0/sources).
 
 ### Run the Example
 
