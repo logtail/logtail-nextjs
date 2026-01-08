@@ -1,34 +1,44 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Better Stack Next.js Logger Example
 
-## Getting Started
+This example demonstrates how to integrate Better Stack logging into a Next.js application.
 
-First, run the development server:
+## Setup
+
+### Environment Variables
+
+Copy `.env-example` to `.env` and fill in your Better Stack credentials:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+cp .env-example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then edit `.env`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Your Better Stack source token
+NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN="your_source_token_here"
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+# Your Better Stack ingesting URL
+NEXT_PUBLIC_BETTER_STACK_INGESTING_URL="https://your-cluster.betterstackdata.com"
 
-## Learn More
+# Log level (optional - debug/info/warn/error/off)
+NEXT_PUBLIC_BETTER_STACK_LOG_LEVEL="info"
+```
 
-To learn more about Next.js, take a look at the following resources:
+You can create your source in Better Stack -> Telemetry -> [Sources](https://telemetry.betterstack.com/team/0/sources).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Run the Example
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+```bash
+npm install
+npm run dev
+```
 
-## Deploy on Vercel
+Open [http://localhost:3000](http://localhost:3000) to see the demo.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Click the buttons to generate logs and see them appear in your Better Stack dashboard in real-time.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## Need Help?
+
+- Check the [Better Stack Next.js documentation](https://betterstack.com/docs/logs/javascript/nextjs/)
+- Visit the [Better Stack dashboard](https://telemetry.betterstack.com/team/0/tail) to view your logs
