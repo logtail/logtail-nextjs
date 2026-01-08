@@ -1,6 +1,6 @@
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
-import { withBetterStackRouteHandler } from '@logtail/next';
 import { type NextRequest } from 'next/server';
+import { withBetterStack } from '@logtail/next';
 
 import { appRouter } from '~/server/api/root';
 import { createTRPCContext } from '~/server/api/trpc';
@@ -8,7 +8,8 @@ import { createTRPCContext } from '~/server/api/trpc';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const handler = withBetterStackRouteHandler((req: NextRequest) =>
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const handler = withBetterStack((req: NextRequest) =>
   fetchRequestHandler({
     endpoint: '/api/trpc',
     req,

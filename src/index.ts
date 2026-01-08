@@ -12,5 +12,4 @@ export {
   withBetterStackNextConfig as withLogtailNextConfig,
   withBetterStackRouteHandler as withLogtailRouteHandler,
 } from './withBetterStack';
-export * from './webVitals';
-export { useLogger } from './hooks';
+// BetterStackWebVitals and useLogger not exported to avoid client-side imports during server builds

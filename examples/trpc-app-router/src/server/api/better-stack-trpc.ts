@@ -34,11 +34,13 @@ export function createBetterStackPlugin() {
 
       if (!isBetterStackRequest(req)) {
         throw new Error(
-          '`nextBetterStackTRPCMiddleware` could not find logger. Did you forget to wrap your route handler in `withBetterStack`? See: TODO: link to docs',
+          '`nextBetterStackTRPCMiddleware` could not find logger. Did you forget to wrap your route handler in `withBetterStack`?',
         );
       }
 
-      const log = req.log.with({ betterStackTRPCMeta: opts.ctx.betterStackTRPCMeta });
+      const log = req.log.with({
+        betterStackTRPCMeta: opts.ctx.betterStackTRPCMeta,
+      });
 
       return opts.next({
         ctx: { log },

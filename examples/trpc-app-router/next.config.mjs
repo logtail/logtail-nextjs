@@ -1,6 +1,6 @@
-import { withBetterStackNextConfig } from '@logtail/next';
+import { withBetterStack } from '@logtail/next';
 
 /** @type {import("next").NextConfig} */
 const config = {};
 
-export default withBetterStackNextConfig(config);
+export default withBetterStack(config);

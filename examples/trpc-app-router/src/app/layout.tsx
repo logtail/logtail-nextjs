@@ -15,15 +15,16 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
   return (
     <html lang="en">
       <body className={inter.className}>
-        <TRPCReactProvider cookies={cookies().toString()}>
+        <TRPCReactProvider cookies={cookieStore.toString()}>
           {children}
         </TRPCReactProvider>
       </body>

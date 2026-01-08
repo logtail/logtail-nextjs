@@ -48,11 +48,16 @@ export function withBetterStackNextConfig(nextConfig: NextConfig): NextConfig {
   };
 }
 
-export type BetterStackRequest = NextRequest & { log: Logger };
+export type BetterStackRequest = Request & {
+  log: Logger;
+  nextUrl?: { hostname: string; pathname: string; protocol: string };
+};
 type NextHandler<T = any> = (
   req: BetterStackRequest,
   arg?: T
 ) => Promise<Response> | Promise<NextResponse> | NextResponse | Response;
+
+type RouteHandler = (request: NextRequest, context: any) => any;
 
 type BetterStackRouteHandlerConfig = {
   logRequestDetails?: boolean | (keyof RequestJSON)[];
@@ -61,36 +66,33 @@ type BetterStackRouteHandlerConfig = {
   redirectLogLevel?: LogLevel; // defaults to LogLevel.info
 };
 
-export function withBetterStackRouteHandler(handler: NextHandler, config?: BetterStackRouteHandlerConfig): NextHandler {
-  return async (req: Request | NextRequest, arg: any) => {
+export function withBetterStackRouteHandler(
+  handler: NextHandler,
+  config?: BetterStackRouteHandlerConfig
+): RouteHandler {
+  return async (request: NextRequest, context: any) => {
     let region = '';
-    if ('geo' in req) {
+    if ('geo' in request) {
       // @ts-ignore NextRequest.ip was removed in Next 15, works with undefined
-      region = req.geo?.region ?? '';
+      region = request.geo?.region ?? '';
     }
 
-    let pathname = '';
-    if ('nextUrl' in req) {
-      pathname = req.nextUrl.pathname;
-    } else if (req instanceof Request) {
-      // pathname = req.url.substring(req.headers.get('host')?.length || 0)
-      pathname = new URL(req.url).pathname;
-    }
+    const pathname = request.nextUrl.pathname;
 
     const requestDetails =
       Array.isArray(config?.logRequestDetails) || config?.logRequestDetails === true
-        ? await requestToJSON(req)
+        ? await requestToJSON(request)
         : undefined;
 
     const report: RequestReport = {
       startTime: new Date().getTime(),
       endTime: new Date().getTime(),
       path: pathname,
-      method: req.method,
-      host: req.headers.get('host'),
-      userAgent: req.headers.get('user-agent'),
-      scheme: req.url.split('://')[0],
-      ip: req.headers.get('x-forwarded-for'),
+      method: request.method,
+      host: request.headers.get('host'),
+      userAgent: request.headers.get('user-agent'),
+      scheme: request.url.split('://')[0],
+      ip: request.headers.get('x-forwarded-for'),
       region,
       details: Array.isArray(config?.logRequestDetails)
         ? (Object.fromEntries(
@@ -106,12 +108,17 @@ export function withBetterStackRouteHandler(handler: NextHandler, config?: Bette
     // child logger to be used by the users within the handler
     const log = logger.with({});
     log.config.source = `${isEdgeRuntime ? 'edge' : 'lambda'}-log`;
-    const betterStackContext = req as BetterStackRequest;
-    const args = arg;
+    const betterStackContext = request as any as BetterStackRequest;
     betterStackContext.log = log;
 
+    // Handle params Promise for Next.js 15+
+    const resolvedParams =
+      context && typeof context === 'object' && 'params' in context && context.params instanceof Promise
+        ? { ...context, params: await context.params }
+        : context;
+
     try {
-      const result = await handler(betterStackContext, args);
+      const result = await handler(betterStackContext, resolvedParams);
       report.endTime = new Date().getTime();
 
       // report log record
@@ -121,7 +128,7 @@ export function withBetterStackRouteHandler(handler: NextHandler, config?: Bette
       if (!isVercel) {
         logger.logHttpRequest(
           LogLevel.info,
-          `${req.method} ${report.path} ${report.statusCode} in ${report.endTime - report.startTime}ms`,
+          `${request.method} ${report.path} ${report.statusCode} in ${report.endTime - report.startTime}ms`,
           report,
           {}
         );
@@ -167,7 +174,7 @@ export function withBetterStackRouteHandler(handler: NextHandler, config?: Bette
       if (!isVercel) {
         logger.logHttpRequest(
           logLevel,
-          `${req.method} ${report.path} ${report.statusCode} in ${report.endTime - report.startTime}ms`,
+          `${request.method} ${report.path} ${report.statusCode} in ${report.endTime - report.startTime}ms`,
           report,
           {}
         );
@@ -183,22 +190,13 @@ export function withBetterStackRouteHandler(handler: NextHandler, config?: Bette
   };
 }
 
-type WithBetterStackParam = NextConfig | NextHandler;
-
-function isNextConfig(param: WithBetterStackParam): param is NextConfig {
-  return typeof param == 'object';
-}
-
 // withBetterStack can be called either with NextConfig, which will add proxy rewrites
-// to improve deliverability of Web-Vitals and logs.
-export function withBetterStack(param: NextHandler, config?: BetterStackRouteHandlerConfig): NextHandler;
-export function withBetterStack(param: NextConfig): NextConfig;
-export function withBetterStack(param: WithBetterStackParam, config?: BetterStackRouteHandlerConfig) {
-  if (typeof param == 'function') {
+// to improve deliverability of Web-Vitals and logs, or with a NextHandler function.
+export function withBetterStack(param: any, config?: BetterStackRouteHandlerConfig): any {
+  if (typeof param === 'function') {
     return withBetterStackRouteHandler(param, config);
-  } else if (isNextConfig(param)) {
-    return withBetterStackNextConfig(param);
+  } else {
+    // Assume it's a NextConfig object if it's not a function
+    return withBetterStackNextConfig(param as NextConfig);
   }
-
-  return withBetterStackRouteHandler(param, config);
 }
