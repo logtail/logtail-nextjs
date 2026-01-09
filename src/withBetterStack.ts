@@ -71,12 +71,6 @@ export function withBetterStackRouteHandler(
   config?: BetterStackRouteHandlerConfig
 ): RouteHandler {
   return async (request: NextRequest, context: any) => {
-    let region = '';
-    if ('geo' in request) {
-      // @ts-ignore NextRequest.ip was removed in Next 15, works with undefined
-      region = request.geo?.region ?? '';
-    }
-
     const pathname = request.nextUrl.pathname;
 
     const requestDetails =
@@ -93,7 +87,6 @@ export function withBetterStackRouteHandler(
       userAgent: request.headers.get('user-agent'),
       scheme: request.url.split('://')[0],
       ip: request.headers.get('x-forwarded-for'),
-      region,
       details: Array.isArray(config?.logRequestDetails)
         ? (Object.fromEntries(
             Object.entries(requestDetails as RequestJSON).filter(([key]) =>
