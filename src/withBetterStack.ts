@@ -48,7 +48,7 @@ export function withBetterStackNextConfig(nextConfig: NextConfig): NextConfig {
   };
 }
 
-export type BetterStackRequest = Request & {
+export type BetterStackRequest = NextRequest & {
   log: Logger;
   nextUrl?: { hostname: string; pathname: string; protocol: string };
 };
