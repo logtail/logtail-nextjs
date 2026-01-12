@@ -1,7 +1,7 @@
 {
   "name": "@logtail/next",
   "description": "Better Stack Telemetry Next.js client",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": "Better Stack <hello@betterstack.com>",
   "license": "MIT",
   "engines": {
