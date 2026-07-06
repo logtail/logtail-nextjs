@@ -15,6 +15,30 @@ Experience SQL-compatible structured log management based on ClickHouse. [Learn 
 - [Running on Vercel ⇗](https://betterstack.com/docs/logs/vercel/)
 - [Running elsewhere  ⇗](https://betterstack.com/docs/logs/javascript/nextjs/)
 
+## Keeping telemetry failures out of your app
+
+By default, `withBetterStack(nextConfig)` proxies browser telemetry to Better Stack with a Next.js rewrite. If the ingest endpoint is ever slow or unreachable, Next.js turns the failed rewrite into a `500` on your own domain and the error shows up in the browser console.
+
+To make telemetry delivery failures invisible to the browser, serve the proxy path with the provided route handler instead. It forwards with a 5-second timeout and always responds `204`, logging delivery failures on the server only. Pick a proxy path that can host a route handler (the default `/_betterstack` can't — `_`-prefixed folders are private in the app router):
+
+```bash
+# .env
+NEXT_PUBLIC_BETTER_STACK_PROXY_PATH=/betterstack
+```
+
+```ts
+// app/betterstack/web-vitals/route.ts, and the same in app/betterstack/logs/route.ts
+export { POST } from '@logtail/next/proxy';
+```
+
+Static route files take precedence over the rewrite, so nothing else changes. Use one file per endpoint — a `[...path]` catch-all would be shadowed by the rewrite, which Next.js checks before dynamic routes. To customize the timeout:
+
+```ts
+import { createBetterStackProxyHandler } from '@logtail/next';
+
+export const POST = createBetterStackProxyHandler({ timeoutMs: 10000 });
+```
+
 ## Need help?
 Please let us know at [hello@betterstack.com](mailto:hello@betterstack.com). We're happy to help!
 
