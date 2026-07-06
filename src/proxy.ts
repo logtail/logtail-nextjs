@@ -4,27 +4,13 @@ import { EndpointType } from './shared';
 const defaultTimeoutMs = 5000;
 
 export type BetterStackProxyHandlerOptions = {
-  // How long to wait for the ingest endpoint before giving up, in milliseconds.
+  // Ingest request timeout in milliseconds.
   timeoutMs?: number;
 };
 
-// The rewrites added by withBetterStackNextConfig let Next.js proxy browser telemetry
-// to the ingest endpoint, but Next.js surfaces any upstream failure (e.g. ETIMEDOUT)
-// as a 500 to the client. Mounting this handler in the app router takes precedence
-// over the rewrite and always responds 2xx, so an unreachable ingest endpoint never
-// shows up as a failed request in the app.
-//
-// The default proxy path can't host a route handler ("_betterstack" is a private
-// folder, excluded from routing), so pick a routable one via the env var:
-//
-//   # .env
-//   NEXT_PUBLIC_BETTER_STACK_PROXY_PATH=/betterstack
-//
-//   // app/betterstack/web-vitals/route.ts, and the same in app/betterstack/logs/route.ts
-//   export { POST } from '@logtail/next/proxy';
-//
-// Static route files are required — Next.js checks "afterFiles" rewrites before
-// dynamic routes, so a [...path] catch-all would be shadowed by the rewrite.
+// Route handler alternative to the withBetterStackNextConfig rewrites, which turn any
+// upstream failure (e.g. ETIMEDOUT) into a 500 for the client. Always responds 2xx and
+// logs delivery failures server-side instead. Mounting instructions: README.
 export function createBetterStackProxyHandler(options: BetterStackProxyHandlerOptions = {}) {
   const timeoutMs = options.timeoutMs ?? defaultTimeoutMs;
 

@@ -7,9 +7,7 @@ import { isBrowser } from "../config";
 // This is the generic config class for all platforms that doesn't have a special
 // implementation (e.g: vercel, netlify). All config classes extends this one.
 export default class GenericConfig implements Provider {
-  // The default path can't be served by an app router route handler ("_"-prefixed
-  // folders are private and excluded from routing), so it can be overridden to mount
-  // createBetterStackProxyHandler — see src/proxy.ts.
+  // Overridable because "_"-prefixed app router folders can't host route handlers (see src/proxy.ts).
   proxyPath = process.env.NEXT_PUBLIC_BETTER_STACK_PROXY_PATH || '/_betterstack';
   shouldSendEdgeReport = false;
   token = process.env.NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN || process.env.BETTER_STACK_SOURCE_TOKEN || process.env.NEXT_PUBLIC_LOGTAIL_SOURCE_TOKEN || process.env.LOGTAIL_SOURCE_TOKEN;
