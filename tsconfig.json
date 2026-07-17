@@ -37,6 +37,7 @@
     "src/withBetterStack.ts",
     "src/webVitals/index.ts",
     "src/hooks.ts",
+    "src/proxy.ts",
   ],
   "exclude": [
     "node_modules",

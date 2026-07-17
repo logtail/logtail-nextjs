@@ -2,6 +2,7 @@ export { log, Logger, LogLevel, type LoggerConfig, type RequestReport } from './
 export { EndpointType, throttle } from './shared';
 export * from './platform/base';
 export * from './config';
+export { createBetterStackProxyHandler, type BetterStackProxyHandlerOptions } from './proxy';
 export {
   withBetterStack,
   type BetterStackRequest,

@@ -24,6 +24,11 @@
       "types": "./dist/webVitals/index.d.ts",
       "import": "./dist/webVitals/index.js",
       "require": "./dist/webVitals/index.js"
+    },
+    "./proxy": {
+      "types": "./dist/proxy.d.ts",
+      "import": "./dist/proxy.js",
+      "require": "./dist/proxy.js"
     }
   },
   "scripts": {
