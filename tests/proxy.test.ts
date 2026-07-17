@@ -104,6 +104,21 @@ test('aborts and responds 204 when the ingest endpoint hangs beyond the timeout'
   expect(warnMock).toHaveBeenCalledTimes(1);
 });
 
+test('matches endpoints when trailingSlash: true canonicalizes the URL', async () => {
+  const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValue(new Response('{}', { status: 202 }));
+  const handler = createBetterStackProxyHandler();
+
+  const request = new Request('http://localhost:3000/_betterstack/web-vitals/', {
+    method: 'POST',
+    body: '[]',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  const response = await handler(request);
+
+  expect(response.status).toBe(204);
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+});
+
 test('responds 404 for unknown proxy paths without forwarding', async () => {
   const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValue(new Response('{}', { status: 202 }));
   const handler = createBetterStackProxyHandler();

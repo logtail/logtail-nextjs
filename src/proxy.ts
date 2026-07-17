@@ -15,7 +15,8 @@ export function createBetterStackProxyHandler(options: BetterStackProxyHandlerOp
   const timeoutMs = options.timeoutMs ?? defaultTimeoutMs;
 
   return async function handleProxiedIngest(request: Request): Promise<Response> {
-    const pathname = new URL(request.url).pathname;
+    // Strip trailing slash so `trailingSlash: true` in next.config.js still matches.
+    const pathname = new URL(request.url).pathname.replace(/\/$/, '');
     const endpointType = pathname.endsWith(`/${EndpointType.webVitals}`)
       ? EndpointType.webVitals
       : pathname.endsWith(`/${EndpointType.logs}`)
