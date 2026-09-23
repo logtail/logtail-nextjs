@@ -67,7 +67,36 @@ export type LoggerConfig = {
   source?: string;
   req?: any;
   prettyPrint?: typeof prettyPrint;
+  // Keys whose values are replaced with [FILTERED] in fields and request details, at any depth.
+  // A string matches every key containing it (case-insensitive), a RegExp is tested against the key.
+  redact?: (string | RegExp)[];
 };
+
+const FILTERED = '[FILTERED]';
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && [Object.prototype, null].includes(Object.getPrototypeOf(value));
+
+const matchesRedactPattern = (key: string, patterns: (string | RegExp)[]) =>
+  patterns.some((pattern) =>
+    typeof pattern === 'string' ? key.toLowerCase().includes(pattern.toLowerCase()) : pattern.test(key)
+  );
+
+// Replaces the values of matching keys the way Rails' filter_parameters does
+export function redact<T>(value: T, patterns: (string | RegExp)[]): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => redact(item, patterns)) as T;
+  }
+  if (isPlainObject(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        key,
+        matchesRedactPattern(key, patterns) ? FILTERED : redact(item, patterns),
+      ])
+    ) as T;
+  }
+  return value;
+}
 
 export class Logger {
   public logEvents: LogEvent[] = [];
@@ -136,10 +165,14 @@ export class Logger {
       logEvent.fields = { ...logEvent.fields, args: args };
     }
 
+    if (this.config.redact) {
+      logEvent.fields = redact(logEvent.fields, this.config.redact);
+    }
+
     config.injectPlatformMetadata(logEvent, this.config.source!);
 
     if (this.config.req != null) {
-      logEvent.request = this.config.req;
+      logEvent.request = this._redactDetails(this.config.req);
       if (logEvent.platform) {
         logEvent.platform.route = this.config.req.path;
       } else if (logEvent.vercel) {
@@ -150,6 +183,14 @@ export class Logger {
     return logEvent;
   };
 
+  // Request reports are shared by every event of a request, so their details are filtered in place
+  private _redactDetails = (request: RequestReport) => {
+    if (this.config.redact && request.details) {
+      request.details = redact(request.details, this.config.redact);
+    }
+    return request;
+  };
+
   logHttpRequest(level: LogLevel, message: string, request: any, args: any) {
     // Check log level before proceeding
     if (level < this.logLevel || this.logLevel === LogLevel.off) {
@@ -157,7 +198,7 @@ export class Logger {
     }
 
     const logEvent = this._transformEvent(level, message, args);
-    logEvent.request = request;
+    logEvent.request = this._redactDetails(request);
     this.logEvents.push(logEvent);
     if (this.config.autoFlush) {
       this.throttledSendLogs();
