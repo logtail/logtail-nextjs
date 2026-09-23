@@ -67,6 +67,9 @@ export type LoggerConfig = {
   source?: string;
   req?: any;
   prettyPrint?: typeof prettyPrint;
+  // How many times a failed delivery is retried, and how long to wait between attempts (ms)
+  retryCount?: number;
+  retryBackoff?: number;
 };
 
 export class Logger {
@@ -78,6 +81,8 @@ export class Logger {
     autoFlush: true,
     source: 'frontend-log',
     prettyPrint: prettyPrint,
+    retryCount: 3,
+    retryBackoff: 100,
   };
 
   constructor(public initConfig: LoggerConfig = {}) {
@@ -257,34 +262,41 @@ export class Logger {
     }
     const reqOptions: RequestInit = { body, method, keepalive, headers };
 
-    function sendFallback() {
-      // Do not leak network errors; does not affect the running app
-      return fetch(url, reqOptions).catch(console.error);
+    if (isBrowser && isVercel && typeof navigator !== 'undefined' && navigator.sendBeacon) {
+      // sendBeacon fails if message size is greater than 64kb, so
+      // we fall back to fetch.
+      // Navigator has to be bound to ensure it does not error in some browsers
+      // https://xgwang.me/posts/you-may-not-know-beacon/#it-may-throw-error%2C-be-sure-to-catch
+      try {
+        if (navigator.sendBeacon.bind(navigator)(url, body)) {
+          return;
+        }
+      } catch (error) {
+        // fall back to fetch
+      }
     }
 
-    try {
-      if (typeof fetch === 'undefined') {
-        const fetch = await require('whatwg-fetch');
-        return fetch(url, reqOptions).catch(console.error);
-      } else if (isBrowser && isVercel && navigator.sendBeacon) {
-        // sendBeacon fails if message size is greater than 64kb, so
-        // we fall back to fetch.
-        // Navigator has to be bound to ensure it does not error in some browsers
-        // https://xgwang.me/posts/you-may-not-know-beacon/#it-may-throw-error%2C-be-sure-to-catch
-        try {
-          if (!navigator.sendBeacon.bind(navigator)(url, body)) {
-            return sendFallback();
-          }
-        } catch (error) {
-          return sendFallback();
+    // Do not leak network errors; does not affect the running app
+    return this.sendWithRetries(reqOptions).catch(console.error);
+  }
+
+  // Posts one batch, retrying network errors, 5xx and 429 responses retryCount times
+  private async sendWithRetries(reqOptions: RequestInit): Promise<Response> {
+    const fetchFn: typeof fetch = typeof fetch === 'undefined' ? require('whatwg-fetch').fetch : fetch;
+    const { retryCount = 0, retryBackoff = 0 } = this.config;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const response = await fetchFn(url, reqOptions);
+        if (response.status < 500 && response.status !== 429) {
+          return response;
         }
-      } else {
-        return sendFallback();
+        throw new Error(`${url} responded with ${response.status}`);
+      } catch (error) {
+        if (attempt >= retryCount) {
+          throw error;
+        }
+        await new Promise((resolve) => setTimeout(resolve, retryBackoff));
       }
-    } catch (e) {
-      console.warn(`Failed to send logs to BetterStack: ${e}`);
-      // put the log events back in the queue
-      this.logEvents = [...this.logEvents, JSON.parse(body)];
     }
   }
 
