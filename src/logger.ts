@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { config, isBrowser, isVercel, Version } from './config';
 import { NetlifyInfo } from './platform/netlify';
-import { isNoPrettyPrint, requestToJSON, throttle, type RequestJSON } from './shared';
+import { isNoPrettyPrint, requestDetails, throttle, type LogRequestDetails, type RequestJSON } from './shared';
 
 const url = config.getLogsEndpoint();
 
@@ -165,8 +165,8 @@ export class Logger {
   }
 
   middleware<
-    TConfig extends { logRequestDetails?: boolean | (keyof RequestJSON)[] },
-    TReturn = TConfig['logRequestDetails'] extends boolean | (keyof RequestJSON)[] ? Promise<void> : void,
+    TConfig extends { logRequestDetails?: LogRequestDetails },
+    TReturn = TConfig['logRequestDetails'] extends LogRequestDetails ? Promise<void> : void,
   >(request: NextRequest | Request, config?: TConfig): TReturn {
     const nextRequest = request as NextRequest;
     const req = {
@@ -185,19 +185,10 @@ export class Logger {
     const message = `${nextRequest.method} ${nextRequest.nextUrl.pathname}`;
 
     if (config?.logRequestDetails) {
-      return requestToJSON(request).then((details) => {
-        const newReq = {
-          ...req,
-          details: Array.isArray(config.logRequestDetails)
-            ? (Object.fromEntries(
-                Object.entries(details as RequestJSON).filter(([key]) =>
-                  (config.logRequestDetails as (keyof RequestJSON)[]).includes(key as keyof RequestJSON)
-                )
-              ) as RequestJSON)
-            : details,
-        };
-        return this.logHttpRequest(LogLevel.info, message, newReq, {});
-      }) as TReturn;
+      // The request's real consumer runs after the middleware: never read the body here.
+      return requestDetails(request, config.logRequestDetails, { readBody: false }).then((details) =>
+        this.logHttpRequest(LogLevel.info, message, { ...req, details }, {})
+      ) as TReturn;
     }
 
     return this.logHttpRequest(LogLevel.info, message, req, {}) as TReturn;
