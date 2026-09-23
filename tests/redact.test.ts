@@ -52,7 +52,12 @@ test('child loggers inherit the redaction and apply it to their bound fields', a
 });
 
 test('redacts request details captured by middleware', async () => {
-  const logger = new Logger({ source: 'middleware', autoFlush: false, redact: ['authorization', 'cookie', 'session'] });
+  // A plain 'cookie' would also match the whole `cookies` map, so the header is matched exactly.
+  const logger = new Logger({
+    source: 'middleware',
+    autoFlush: false,
+    redact: ['authorization', /^cookie$/, 'session'],
+  });
   const request = new NextRequest('http://localhost:3000/api/items', {
     method: 'GET',
     headers: { authorization: 'Bearer token', cookie: 'session=abc; theme=dark', 'user-agent': 'vitest' },
