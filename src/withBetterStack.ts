@@ -1,7 +1,7 @@
 import { NextConfig } from 'next';
 import { Rewrite } from 'next/dist/lib/load-custom-routes';
 import { config, isEdgeRuntime, isVercel } from './config';
-import { LogLevel, Logger, RequestReport } from './logger';
+import { LogLevel, Logger, LoggerConfig, RequestReport } from './logger';
 import { type NextRequest, type NextResponse } from 'next/server';
 import { EndpointType, RequestJSON, requestToJSON } from './shared';
 
@@ -61,6 +61,8 @@ type RouteHandler = (request: NextRequest, context: any) => any;
 
 type BetterStackRouteHandlerConfig = {
   logRequestDetails?: boolean | (keyof RequestJSON)[];
+  // keys to replace with [FILTERED] in the request details and the handler's logs, see LoggerConfig
+  redact?: LoggerConfig['redact'];
   // override default log levels for notFound and redirect
   notFoundLogLevel?: LogLevel; // defaults to LogLevel.warn
   redirectLogLevel?: LogLevel; // defaults to LogLevel.info
@@ -97,7 +99,7 @@ export function withBetterStackRouteHandler(
     };
 
     // main logger, mainly used to log reporting on the incoming HTTP request
-    const logger = new Logger({ req: report, source: isEdgeRuntime ? 'edge' : 'lambda' });
+    const logger = new Logger({ req: report, source: isEdgeRuntime ? 'edge' : 'lambda', redact: config?.redact });
     // child logger to be used by the users within the handler
     const log = logger.with({});
     log.config.source = `${isEdgeRuntime ? 'edge' : 'lambda'}-log`;
