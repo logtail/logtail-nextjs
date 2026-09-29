@@ -6,29 +6,57 @@ on:
   push:
     branches:
       - main
-    tags:
-      - "v*"
 
 jobs:
   check-format:
     name: Check format
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 18
-      - run: npm install
+          node-version: 24.x
+      - run: npm ci
       - name: Check format in library
         run: npm run check-format
       - name: Check format in logger example
-        run: cd examples/logger && npm install && npm run check-format
+        run: cd examples/logger && npm ci && npm run check-format
       - name: Check format in rpc-app-router example
-        run: cd examples/trpc-app-router && npm install && npm run check-format
+        run: cd examples/trpc-app-router && npm ci && npm run check-format
+
+  compatibility:
+    name: Test with Next.js ${{ matrix.next }} and React ${{ matrix.react }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # A canary can break with no change on our side: report it, do not block on it
+    continue-on-error: ${{ matrix.next == 'canary' }}
+    strategy:
+      matrix:
+        # 15.0 is the lower bound of the peer range
+        next: ["15.0", "15", "16", canary]
+        react: ["18", "19"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+      - run: npm ci
+      - name: Installing Next.js ${{ matrix.next }} and React ${{ matrix.react }}
+        run: npm install --no-save next@${{ matrix.next }} react@${{ matrix.react }} react-dom@${{ matrix.react }} @types/react@${{ matrix.react }}
+      - name: Building library
+        run: npm run build
+      - name: Running tests
+        run: npm test
 
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         node:
@@ -36,14 +64,14 @@ jobs:
           - 20.x
           - 22.x
           - 24.x
+          - 26.x
           - latest
         install-cmd:
-          - npm install
+          # npm ci fails on a lockfile that drifted from package.json, npm update takes the newest allowed versions
+          - npm ci
           - npm update
         exclude:
           - node: 18.x
-            install-cmd: npm update
-          - node: 19.x
             install-cmd: npm update
       fail-fast: false
     steps:
@@ -56,27 +84,9 @@ jobs:
         run: npm run build
       - name: Running tests
         run: npm test
+      - name: Type-checking library and tests
+        run: npm run typecheck
       - name: Building logger example
         run: cd examples/logger && ${{ matrix.install-cmd }} && npm run build
       - name: Building rpc-app-router example
         run: cd examples/trpc-app-router && ${{ matrix.install-cmd }} && npm run build
-
-  publish:
-    name: Publish
-    needs:
-      - check-format
-      - build-and-test
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: ${{ env.NODEVERSION }}
-          cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
-      - run: npm install
-      - run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTOMATION_TOKEN }}
-      - uses: softprops/action-gh-release@v3

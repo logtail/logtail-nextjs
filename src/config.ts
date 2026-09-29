@@ -18,7 +18,9 @@ export const isWebWorker =
   typeof self !== 'undefined' &&
   typeof globalThis.WorkerGlobalScope !== 'undefined' &&
   self instanceof WorkerGlobalScope;
-export const isBrowser = typeof window !== 'undefined' || isWebWorker;
+// Deno (Netlify Edge Functions) exposes `window` as an alias of globalThis with no DOM, so a window
+// on its own does not make a browser.
+export const isBrowser = (typeof window !== 'undefined' && typeof window.document !== 'undefined') || isWebWorker;
 export const isEdgeRuntime = globalThis.EdgeRuntime ? true : false;
 
 // Detect the platform provider, and return the appropriate config

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { config, isBrowser, isVercel, Version } from './config';
 import { NetlifyInfo } from './platform/netlify';
-import { isNoPrettyPrint, requestToJSON, throttle, type RequestJSON } from './shared';
+import { isNoPrettyPrint, requestDetails, throttle, type LogRequestDetails, type RequestJSON } from './shared';
 
 const url = config.getLogsEndpoint();
 
@@ -67,6 +67,9 @@ export type LoggerConfig = {
   source?: string;
   req?: any;
   prettyPrint?: typeof prettyPrint;
+  // How many times a failed delivery is retried, and how long to wait between attempts (ms)
+  retryCount?: number;
+  retryBackoff?: number;
   // Keys whose values are replaced with [FILTERED] in fields and request details, at any depth.
   // A string matches every key containing it (case-insensitive), a RegExp is tested against the key.
   redact?: (string | RegExp)[];
@@ -107,6 +110,8 @@ export class Logger {
     autoFlush: true,
     source: 'frontend-log',
     prettyPrint: prettyPrint,
+    retryCount: 3,
+    retryBackoff: 100,
   };
 
   constructor(public initConfig: LoggerConfig = {}) {
@@ -206,8 +211,8 @@ export class Logger {
   }
 
   middleware<
-    TConfig extends { logRequestDetails?: boolean | (keyof RequestJSON)[] },
-    TReturn = TConfig['logRequestDetails'] extends boolean | (keyof RequestJSON)[] ? Promise<void> : void,
+    TConfig extends { logRequestDetails?: LogRequestDetails },
+    TReturn = TConfig['logRequestDetails'] extends LogRequestDetails ? Promise<void> : void,
   >(request: NextRequest | Request, config?: TConfig): TReturn {
     const nextRequest = request as NextRequest;
     const req = {
@@ -226,19 +231,10 @@ export class Logger {
     const message = `${nextRequest.method} ${nextRequest.nextUrl.pathname}`;
 
     if (config?.logRequestDetails) {
-      return requestToJSON(request).then((details) => {
-        const newReq = {
-          ...req,
-          details: Array.isArray(config.logRequestDetails)
-            ? (Object.fromEntries(
-                Object.entries(details as RequestJSON).filter(([key]) =>
-                  (config.logRequestDetails as (keyof RequestJSON)[]).includes(key as keyof RequestJSON)
-                )
-              ) as RequestJSON)
-            : details,
-        };
-        return this.logHttpRequest(LogLevel.info, message, newReq, {});
-      }) as TReturn;
+      // The request's real consumer runs after the middleware: never read the body here.
+      return requestDetails(request, config.logRequestDetails, { readBody: false }).then((details) =>
+        this.logHttpRequest(LogLevel.info, message, { ...req, details }, {})
+      ) as TReturn;
     }
 
     return this.logHttpRequest(LogLevel.info, message, req, {}) as TReturn;
@@ -298,34 +294,41 @@ export class Logger {
     }
     const reqOptions: RequestInit = { body, method, keepalive, headers };
 
-    function sendFallback() {
-      // Do not leak network errors; does not affect the running app
-      return fetch(url, reqOptions).catch(console.error);
+    if (isBrowser && isVercel && typeof navigator !== 'undefined' && navigator.sendBeacon) {
+      // sendBeacon fails if message size is greater than 64kb, so
+      // we fall back to fetch.
+      // Navigator has to be bound to ensure it does not error in some browsers
+      // https://xgwang.me/posts/you-may-not-know-beacon/#it-may-throw-error%2C-be-sure-to-catch
+      try {
+        if (navigator.sendBeacon.bind(navigator)(url, body)) {
+          return;
+        }
+      } catch (error) {
+        // fall back to fetch
+      }
     }
 
-    try {
-      if (typeof fetch === 'undefined') {
-        const fetch = await require('whatwg-fetch');
-        return fetch(url, reqOptions).catch(console.error);
-      } else if (isBrowser && isVercel && navigator.sendBeacon) {
-        // sendBeacon fails if message size is greater than 64kb, so
-        // we fall back to fetch.
-        // Navigator has to be bound to ensure it does not error in some browsers
-        // https://xgwang.me/posts/you-may-not-know-beacon/#it-may-throw-error%2C-be-sure-to-catch
-        try {
-          if (!navigator.sendBeacon.bind(navigator)(url, body)) {
-            return sendFallback();
-          }
-        } catch (error) {
-          return sendFallback();
+    // Do not leak network errors; does not affect the running app
+    return this.sendWithRetries(reqOptions).catch(console.error);
+  }
+
+  // Posts one batch, retrying network errors, 5xx and 429 responses retryCount times
+  private async sendWithRetries(reqOptions: RequestInit): Promise<Response> {
+    const fetchFn: typeof fetch = typeof fetch === 'undefined' ? require('whatwg-fetch').fetch : fetch;
+    const { retryCount = 0, retryBackoff = 0 } = this.config;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const response = await fetchFn(url, reqOptions);
+        if (response.status < 500 && response.status !== 429) {
+          return response;
         }
-      } else {
-        return sendFallback();
+        throw new Error(`${url} responded with ${response.status}`);
+      } catch (error) {
+        if (attempt >= retryCount) {
+          throw error;
+        }
+        await new Promise((resolve) => setTimeout(resolve, retryBackoff));
       }
-    } catch (e) {
-      console.warn(`Failed to send logs to BetterStack: ${e}`);
-      // put the log events back in the queue
-      this.logEvents = [...this.logEvents, JSON.parse(body)];
     }
   }
 

@@ -1,7 +1,7 @@
 {
   "name": "@logtail/next",
   "description": "Better Stack Telemetry Next.js client",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": "Better Stack <hello@betterstack.com>",
   "license": "MIT",
   "engines": {
@@ -9,6 +9,11 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "!dist/*.tsbuildinfo"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -36,6 +41,7 @@
     "prepare": "npm run build",
     "format": "prettier --write src/*.ts tests/*.ts",
     "check-format": "prettier -c src/*.ts tests/*.ts",
+    "typecheck": "tsc -p tsconfig.tests.json",
     "test": "vitest run tests --coverage"
   },
   "repository": {

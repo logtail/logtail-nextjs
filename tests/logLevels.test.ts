@@ -1,4 +1,4 @@
-import { test, expect, vi } from 'vitest';
+import { test, expect, vi, Mock } from 'vitest';
 import { log, Logger, LogLevel } from '../src/logger';
 
 vi.hoisted(() => {
@@ -13,7 +13,7 @@ test('log levels', async () => {
   global.fetch = vi.fn(async () => {
     const resp = new Response('', { status: 200 });
     return Promise.resolve(resp);
-  }) as vitest.Mock<typeof fetch>;
+  }) as Mock<typeof fetch>;
 
   log.info('test');
   await log.flush();

@@ -61,10 +61,39 @@ export interface RequestJSON {
   };
 }
 
+export type LogRequestDetails = boolean | (keyof RequestJSON)[];
+
+/**
+ * Builds the `details` of a request report according to `logRequestDetails`: everything for `true`,
+ * only the listed keys for a list, nothing when unset. The body is read (through a clone) only when it
+ * is asked for and `readBody` allows it. Middleware must never touch it: on Edge runtimes even `clone()`
+ * locks the stream the platform forwards to the route handler behind the middleware.
+ */
+export async function requestDetails(
+  request: Request | NextRequest,
+  logRequestDetails: LogRequestDetails | undefined,
+  { readBody = true }: { readBody?: boolean } = {}
+): Promise<RequestJSON | undefined> {
+  if (!logRequestDetails) {
+    return undefined;
+  }
+  const keys = Array.isArray(logRequestDetails) ? logRequestDetails : undefined;
+  const details = await requestToJSON(request, { readBody: readBody && (!keys || keys.includes('body')) });
+  if (!keys) {
+    return details;
+  }
+  return Object.fromEntries(
+    Object.entries(details).filter(([key]) => keys.includes(key as keyof RequestJSON))
+  ) as RequestJSON;
+}
+
 /**
  * Transforms a NextRequest or Request object into a JSON-serializable object
  */
-export async function requestToJSON(request: Request | NextRequest): Promise<RequestJSON> {
+export async function requestToJSON(
+  request: Request | NextRequest,
+  { readBody = true }: { readBody?: boolean } = {}
+): Promise<RequestJSON> {
   // Get all headers
   const headers: Record<string, string> = {};
   request.headers.forEach((value, key) => {
@@ -110,12 +139,11 @@ export async function requestToJSON(request: Request | NextRequest): Promise<Req
   }
 
   let body: RequestJSON['body'] | undefined;
-  if (request.body) {
+  if (readBody && request.body) {
     try {
       const clonedRequest = request.clone();
       try {
         body = await clonedRequest.json();
-        clonedRequest.body?.getReader;
       } catch {
         body = await clonedRequest.text();
       }

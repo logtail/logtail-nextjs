@@ -3,7 +3,7 @@ import { Rewrite } from 'next/dist/lib/load-custom-routes';
 import { config, isEdgeRuntime, isVercel } from './config';
 import { LogLevel, Logger, LoggerConfig, RequestReport } from './logger';
 import { type NextRequest, type NextResponse } from 'next/server';
-import { EndpointType, RequestJSON, requestToJSON } from './shared';
+import { EndpointType, LogRequestDetails, requestDetails } from './shared';
 
 export function withBetterStackNextConfig(nextConfig: NextConfig): NextConfig {
   return {
@@ -60,7 +60,7 @@ type NextHandler<T = any> = (
 type RouteHandler = (request: NextRequest, context: any) => any;
 
 type BetterStackRouteHandlerConfig = {
-  logRequestDetails?: boolean | (keyof RequestJSON)[];
+  logRequestDetails?: LogRequestDetails;
   // keys to replace with [FILTERED] in the request details and the handler's logs, see LoggerConfig
   redact?: LoggerConfig['redact'];
   // override default log levels for notFound and redirect
@@ -75,11 +75,6 @@ export function withBetterStackRouteHandler(
   return async (request: NextRequest, context: any) => {
     const pathname = request.nextUrl.pathname;
 
-    const requestDetails =
-      Array.isArray(config?.logRequestDetails) || config?.logRequestDetails === true
-        ? await requestToJSON(request)
-        : undefined;
-
     const report: RequestReport = {
       startTime: new Date().getTime(),
       endTime: new Date().getTime(),
@@ -89,13 +84,7 @@ export function withBetterStackRouteHandler(
       userAgent: request.headers.get('user-agent'),
       scheme: request.url.split('://')[0],
       ip: request.headers.get('x-forwarded-for'),
-      details: Array.isArray(config?.logRequestDetails)
-        ? (Object.fromEntries(
-            Object.entries(requestDetails as RequestJSON).filter(([key]) =>
-              (config?.logRequestDetails as (keyof RequestJSON)[]).includes(key as keyof RequestJSON)
-            )
-          ) as RequestJSON)
-        : requestDetails,
+      details: await requestDetails(request, config?.logRequestDetails),
     };
 
     // main logger, mainly used to log reporting on the incoming HTTP request
@@ -143,15 +132,18 @@ export function withBetterStackRouteHandler(
       let logLevel = LogLevel.error;
       // handle navigation errors like notFound and redirect
       if (error instanceof Error) {
-        if (error.message === 'NEXT_NOT_FOUND') {
-          logLevel = config?.notFoundLogLevel ?? LogLevel.warn;
-          statusCode = 404;
+        const e: Error & { digest?: string } = error;
+        // notFound() throws NEXT_HTTP_ERROR_FALLBACK;404 since Next.js 15.1, forbidden() and
+        // unauthorized() do the same with their own status. Next.js 15.0 threw NEXT_NOT_FOUND.
+        const httpFallbackStatus = /^NEXT_HTTP_ERROR_FALLBACK;(\d{3})$/.exec(e.digest ?? '')?.[1];
+        if (error.message === 'NEXT_NOT_FOUND' || httpFallbackStatus) {
+          statusCode = httpFallbackStatus ? parseInt(httpFallbackStatus) : 404;
+          logLevel = (statusCode === 404 ? config?.notFoundLogLevel : undefined) ?? LogLevel.warn;
         } else if (error.message === 'NEXT_REDIRECT') {
           logLevel = config?.redirectLogLevel ?? LogLevel.info;
           // according to Next.js docs, values are: 307 (Temporary) or 308 (Permanent)
           // see: https://nextjs.org/docs/app/api-reference/functions/redirect#why-does-redirect-use-307-and-308
           // extract status code from digest, if exists
-          const e: Error & { digest?: string } = error;
           if (e.digest) {
             const d = e.digest.split(';');
             statusCode = parseInt(d[3]);
