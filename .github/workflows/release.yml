@@ -1,0 +1,194 @@
+# Publishes @logtail/next to npm with trusted publishing (OIDC), the way logtail-js releases the
+# @logtail/* packages. No npm token exists anywhere: the package on npmjs.com trusts exactly this
+# workflow file, run from this repository in the "npm" environment, so the environment's required
+# reviewers are the release gate.
+#
+# One-time setup, both required before the first run:
+#   - GitHub: create the "npm" environment with required reviewers, deployment branches limited
+#     to main. A job that references a missing environment creates it WITHOUT protection.
+#   - npmjs.com, package @logtail/next: Settings → Trusted publisher → GitHub Actions with
+#     organization "logtail", repository "logtail-nextjs", workflow "release.yml", environment
+#     "npm", and "npm publish" allowed.
+# Once the first release went through, delete the NPM_AUTOMATION_TOKEN repository secret.
+#
+# Release: Actions → Release → Run workflow from main, pick patch or minor, approve the
+# environment prompt. The workflow bumps the version in package.json and package-lock.json,
+# commits "Bump version to vX.Y.Z", tags it, pushes both, publishes to npm with provenance
+# attached and creates a GitHub release with auto-generated notes for the tag; edit the notes
+# afterwards if needed.
+#
+# Retry: if a release failed after the version commit was pushed, run "retry" right away from
+# main. It bumps nothing, rebuilds the tagged commit, publishes the version unless npm already
+# has it and creates the GitHub release if it is still missing. Running patch or minor again
+# would release the next version instead.
+#
+# Dry run: bumps in place without committing, builds, packs with `npm publish --dry-run` and
+# fails unless the OIDC token exchange succeeded. npm performs the exchange before it skips the
+# upload, so this proves that the trusted publisher config on npmjs.com matches without
+# publishing anything. A dry run may be dispatched from any branch.
+#
+# The release job holds the OIDC permission, so it runs as little third-party code as possible:
+# dependency lifecycle scripts are disabled, nothing is restored from the Actions cache, and the
+# test toolchain only runs in the unprivileged verify job. Do not add `registry-url` to
+# setup-node here: the .npmrc it writes expects a token and breaks the OIDC exchange.
+#
+# The provenance attests the commit the workflow was dispatched on, which is the parent of the
+# version commit created during the run; the two differ by the version bump only.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "patch or minor: bump, tag and publish. retry: finish a release that failed halfway."
+        type: choice
+        options: [patch, minor, retry]
+        required: true
+      dry_run:
+        description: "Dry run: bump and pack, verify OIDC with npm, publish nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build library
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+  release:
+    name: Release
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: write # pushes the version commit and tag, creates the GitHub release
+      id-token: write # OIDC token exchange with npm
+    env:
+      RELEASE: ${{ inputs.release }}
+      DRY_RUN: ${{ inputs.dry_run }}
+
+    steps:
+      - name: Releases run from main only
+        if: ${{ !inputs.dry_run && github.ref != 'refs/heads/main' }}
+        run: |
+          echo "::error::Dispatch the release from main, not from $GITHUB_REF_NAME."
+          exit 1
+
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the version check looks at the tags on HEAD
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x # bundles npm 11, the first major that does the OIDC exchange
+          package-manager-cache: false # keep the Actions cache out of the privileged job
+
+      - name: Require npm with trusted publishing
+        run: |
+          required=11.5.1
+          current=$(npm --version)
+          if [ "$(printf '%s\n' "$required" "$current" | sort -V | head -n1)" != "$required" ]; then
+            echo "::error::npm $current cannot do the OIDC exchange, $required or newer is needed."
+            exit 1
+          fi
+
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+
+      - name: Bump version
+        id: version
+        run: |
+          current=$(node -p "require('./package.json').version")
+          if git tag --points-at HEAD | grep -qx "v$current"; then tagged=true; else tagged=false; fi
+
+          if [ "$RELEASE" = "retry" ]; then
+            if [ "$tagged" != "true" ]; then
+              echo "::error::retry only finishes a release whose version commit v$current is HEAD."
+              exit 1
+            fi
+            version=$current
+          else
+            if [ "$DRY_RUN" != "true" ] && [ "$tagged" = "true" ]; then
+              echo "::error::HEAD is already released as v$current, there is nothing new to release."
+              exit 1
+            fi
+            version=$(npm version "$RELEASE" --no-git-tag-version --ignore-scripts | sed 's/^v//')
+          fi
+
+          echo "$current -> $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build library
+        run: npm run build
+
+      - name: Dry run
+        if: ${{ inputs.dry_run }}
+        run: |
+          set -o pipefail
+          # --force skips npm's "cannot publish over a previously published version" check, which
+          # otherwise aborts a retry dry run. Nothing is uploaded either way.
+          npm publish --access public --dry-run --force --ignore-scripts --loglevel verbose 2>&1 | tee publish.log
+          if ! grep -q 'Successfully retrieved and set token' publish.log; then
+            echo "::error::npm did not accept the OIDC token, so no trusted publisher matches this workflow."
+            exit 1
+          fi
+
+      - name: Commit and tag
+        if: ${{ !inputs.dry_run && inputs.release != 'retry' }}
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Bump version to v$VERSION"
+          git tag -a "v$VERSION" -m "v$VERSION"
+          git push origin main "v$VERSION"
+
+      - name: Publish
+        if: ${{ !inputs.dry_run }}
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # A retry finds the version on npm when only the GitHub release went missing.
+          if [ "$RELEASE" = "retry" ] && [ "$(npm view "@logtail/next@$VERSION" version 2> /dev/null)" = "$VERSION" ]; then
+            echo "@logtail/next@$VERSION is already on npm."
+          else
+            npm publish --access public --provenance --ignore-scripts
+          fi
+
+      - name: Create GitHub release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "v$VERSION" > /dev/null 2>&1; then
+            echo "Release v$VERSION already exists."
+          else
+            # --verify-tag: only ever attach to the tag this workflow pushed, never create one here.
+            gh release create "v$VERSION" --verify-tag --generate-notes
+          fi
