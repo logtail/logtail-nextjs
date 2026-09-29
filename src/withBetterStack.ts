@@ -3,7 +3,7 @@ import { Rewrite } from 'next/dist/lib/load-custom-routes';
 import { config, isEdgeRuntime, isVercel } from './config';
 import { LogLevel, Logger, RequestReport } from './logger';
 import { type NextRequest, type NextResponse } from 'next/server';
-import { EndpointType, RequestJSON, requestToJSON } from './shared';
+import { EndpointType, LogRequestDetails, requestDetails } from './shared';
 
 export function withBetterStackNextConfig(nextConfig: NextConfig): NextConfig {
   return {
@@ -60,7 +60,7 @@ type NextHandler<T = any> = (
 type RouteHandler = (request: NextRequest, context: any) => any;
 
 type BetterStackRouteHandlerConfig = {
-  logRequestDetails?: boolean | (keyof RequestJSON)[];
+  logRequestDetails?: LogRequestDetails;
   // override default log levels for notFound and redirect
   notFoundLogLevel?: LogLevel; // defaults to LogLevel.warn
   redirectLogLevel?: LogLevel; // defaults to LogLevel.info
@@ -73,11 +73,6 @@ export function withBetterStackRouteHandler(
   return async (request: NextRequest, context: any) => {
     const pathname = request.nextUrl.pathname;
 
-    const requestDetails =
-      Array.isArray(config?.logRequestDetails) || config?.logRequestDetails === true
-        ? await requestToJSON(request)
-        : undefined;
-
     const report: RequestReport = {
       startTime: new Date().getTime(),
       endTime: new Date().getTime(),
@@ -87,13 +82,7 @@ export function withBetterStackRouteHandler(
       userAgent: request.headers.get('user-agent'),
       scheme: request.url.split('://')[0],
       ip: request.headers.get('x-forwarded-for'),
-      details: Array.isArray(config?.logRequestDetails)
-        ? (Object.fromEntries(
-            Object.entries(requestDetails as RequestJSON).filter(([key]) =>
-              (config?.logRequestDetails as (keyof RequestJSON)[]).includes(key as keyof RequestJSON)
-            )
-          ) as RequestJSON)
-        : requestDetails,
+      details: await requestDetails(request, config?.logRequestDetails),
     };
 
     // main logger, mainly used to log reporting on the incoming HTTP request
