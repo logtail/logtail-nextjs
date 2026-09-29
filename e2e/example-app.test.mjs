@@ -28,6 +28,10 @@ const requests = [
   ['GET', '/api/permanentRedirect'],
 ];
 const browserEvent = { level: 'info', message: 'sent by the browser', source: 'frontend-log' };
+const secretRequests = [
+  ['POST', '/api/redact'],
+  ['POST', '/api/redact-edge'],
+];
 
 // One entry per HTTP request the receiver got
 const deliveries = [];
@@ -89,6 +93,14 @@ before(
       const response = await fetch(appUrl + path, { method, redirect: 'manual' });
       responses[path] = { status: response.status, body: await response.text() };
     }
+    for (const [method, path] of secretRequests) {
+      const response = await fetch(appUrl + path, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer user-secret', Cookie: 'session=abc' },
+        body: JSON.stringify({ user: 'ada', password: 'hunter2' }),
+      });
+      responses[path] = { status: response.status, body: await response.text() };
+    }
     const proxied = await fetch(`${appUrl}/_betterstack/logs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sourceToken}` },
@@ -99,7 +111,10 @@ before(
     // Every request is reported by the middleware, which flushes after the response went out
     await waitFor(
       'the logs of every request',
-      () => [...requests, ['POST', '/_betterstack/logs']].every(([, path]) => events('middleware', path).length > 0),
+      () =>
+        [...requests, ...secretRequests, ['POST', '/_betterstack/logs']].every(
+          ([, path]) => events('middleware', path).length > 0
+        ),
       15000
     ).catch(() => {}); // the tests below say what exactly is missing
   },
@@ -170,6 +185,30 @@ test('the middleware reports every request', () => {
     assert.ok(report, `no middleware report for ${method} ${path}`);
     assert.equal(report.message, `${method} ${path}`);
     assert.equal(report.request.method, method);
+  }
+});
+
+test('redact filters the request details and the logs on both runtimes', () => {
+  for (const [path, source] of [
+    ['/api/redact', 'lambda'],
+    ['/api/redact-edge', 'edge'],
+  ]) {
+    assert.deepEqual(responses[path], { status: 200, body: '{"user":"ada"}' });
+
+    const [report] = events(source, path);
+    assert.deepEqual(report.request.details.body, { user: 'ada', password: '[FILTERED]' });
+    assert.equal(report.request.details.headers.authorization, '[FILTERED]');
+    assert.equal(report.request.details.headers.cookie, '[FILTERED]');
+    assert.equal(report.request.details.headers['content-type'], 'application/json');
+
+    const [log] = events(`${source}-log`, path);
+    assert.deepEqual(log.fields, { user: 'ada', password: '[FILTERED]' });
+  }
+  for (const secret of ['hunter2', 'user-secret', 'session=abc']) {
+    assert.ok(
+      !libraryDeliveries().some(({ events }) => JSON.stringify(events).includes(secret)),
+      `${secret} was delivered`
+    );
   }
 });
 
