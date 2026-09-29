@@ -36,6 +36,7 @@
     "prepare": "npm run build",
     "format": "prettier --write src/*.ts tests/*.ts",
     "check-format": "prettier -c src/*.ts tests/*.ts",
+    "typecheck": "tsc -p tsconfig.tests.json",
     "test": "vitest run tests --coverage"
   },
   "repository": {
