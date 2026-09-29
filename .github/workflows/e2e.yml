@@ -1,0 +1,61 @@
+# Runs the example app against the library the way an app consumes it: the library is packed as
+# it would be published, the tarball is installed into examples/logger together with the Next.js
+# and React versions of the matrix leg, the app is built and started, and e2e/ asserts on the
+# logs that a local receiver got in place of the Better Stack ingesting endpoint. No secrets are
+# involved, so it runs for pull requests from forks too.
+#
+# The schedule catches a new Next.js or React release that breaks the library without any change
+# in this repository.
+name: E2E
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "20 5 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  example-app:
+    name: Example app on Next.js ${{ matrix.next }} and React ${{ matrix.react }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        next: ["15", "16"]
+        react: ["18", "19"]
+      fail-fast: false
+    env:
+      # Inlined into the app at build time and read by the server at run time
+      NEXT_PUBLIC_BETTER_STACK_INGESTING_URL: http://127.0.0.1:4517
+      NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN: e2e-token
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+
+      - name: Pack the library as it would be published
+        run: |
+          npm ci
+          npm pack --ignore-scripts
+
+      - name: Install the tarball into the example app with Next.js ${{ matrix.next }} and React ${{ matrix.react }}
+        working-directory: examples/logger
+        run: >
+          npm install --no-save ../../logtail-next-*.tgz
+          next@${{ matrix.next }} react@${{ matrix.react }} react-dom@${{ matrix.react }}
+          @types/react@${{ matrix.react }} @types/react-dom@${{ matrix.react }}
+
+      - name: Build the example app
+        working-directory: examples/logger
+        run: npm run build
+
+      - name: Run the example app and check the logs it delivers
+        run: node --test e2e/example-app.test.mjs
