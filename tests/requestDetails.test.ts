@@ -107,7 +107,7 @@ test('route handler reads the body only when logRequestDetails asks for it', asy
 });
 
 test('route handler with logRequestDetails: true captures the body and leaves it readable', async () => {
-  const handler = withBetterStackRouteHandler(async (req) => Response.json(await req.json()), {
+  const handler = withBetterStackRouteHandler(async (req) => new Response(JSON.stringify(await req.json())), {
     logRequestDetails: true,
   });
   const request = postRequest();
