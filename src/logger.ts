@@ -77,8 +77,15 @@ export type LoggerConfig = {
 
 const FILTERED = '[FILTERED]';
 
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === 'object' && [Object.prototype, null].includes(Object.getPrototypeOf(value));
+// A request body parsed by the Edge runtime comes from another realm, with its own Object.prototype,
+// so a plain object is recognized by having no prototype or a root one
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+  if (value === null || typeof value !== 'object') {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === null || Object.getPrototypeOf(prototype) === null;
+};
 
 const matchesRedactPattern = (key: string, patterns: (string | RegExp)[]) =>
   patterns.some((pattern) =>
