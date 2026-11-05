@@ -31,12 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    # A canary can break with no change on our side: report it, do not block on it
-    continue-on-error: ${{ matrix.next == 'canary' }}
     strategy:
       matrix:
-        # 15.0 is the lower bound of the peer range
-        next: ["15.0", "15", "16", canary]
+        # 15.0 is the lower bound of the peer range. The E2E workflow runs Next.js's canary against Better Stack.
+        next: ["15.0", "15", "16"]
         react: ["18", "19"]
       fail-fast: false
     steps:
@@ -59,27 +57,22 @@ jobs:
       contents: read
     strategy:
       matrix:
+        # The E2E workflow runs the newest Node.js, Next.js and React releases and the Node.js nightly against
+        # Better Stack.
         node:
           - 18.x
           - 20.x
           - 22.x
           - 24.x
           - 26.x
-          - latest
-        install-cmd:
-          # npm ci fails on a lockfile that drifted from package.json, npm update takes the newest allowed versions
-          - npm ci
-          - npm update
-        exclude:
-          - node: 18.x
-            install-cmd: npm update
       fail-fast: false
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
-      - run: ${{ matrix.install-cmd }}
+      # npm ci fails on a lockfile that drifted from package.json
+      - run: npm ci
       - name: Building library
         run: npm run build
       - name: Running tests
@@ -87,6 +80,6 @@ jobs:
       - name: Type-checking library and tests
         run: npm run typecheck
       - name: Building logger example
-        run: cd examples/logger && ${{ matrix.install-cmd }} && npm run build
+        run: cd examples/logger && npm ci && npm run build
       - name: Building rpc-app-router example
-        run: cd examples/trpc-app-router && ${{ matrix.install-cmd }} && npm run build
+        run: cd examples/trpc-app-router && npm ci && npm run build
