@@ -1,33 +1,80 @@
-# Runs the example app against the library the way an app consumes it: the library is packed as
-# it would be published, the tarball is installed into examples/logger together with the Next.js
-# and React versions of the matrix leg, the app is built and started, and e2e/ asserts on the
-# logs that a local receiver got in place of the Better Stack ingesting endpoint. No secrets are
-# involved, so it runs for pull requests from forks too.
-#
-# The schedule catches a new Next.js or React release that breaks the library without any change
-# in this repository.
 name: E2E
 
+# Runs examples/logger, a Next.js app that logs in route handlers on the Node.js and the Edge runtime, in the
+# middleware, in a React Server Component, in the browser and in a web worker, against the library the way an app
+# consumes it, in two ways:
+#
+# local-receiver  packs the library as it would be published, installs the tarball into the example with Next.js 15
+#                 or 16 and React 18 or 19, builds and starts the app, and e2e/example-app.test.mjs asserts on the logs
+#                 that a local receiver got in place of the Better Stack ingesting endpoint. No secrets are involved,
+#                 so it runs for pull requests from forks too.
+# live            proves that the library still delivers logs to Better Stack. Every job creates its own javascript
+#                 source through the Telemetry API, warms it up, builds the example with that source's token and
+#                 ingesting URL (next build renders the RSC page, which logs), and e2e/drive-example-app.mjs starts
+#                 it, requests its API routes and clicks through its pages in the runner's Chrome. Then the job reads
+#                 the stored rows back through the testing team's SQL API connection, checks them exactly against
+#                 e2e/expected.json (nothing missing, extra or duplicated), and deletes the source again, together
+#                 with sources of earlier runs left behind for more than 3 hours. e2e/plan.sh plans three legs:
+#   floor   the oldest versions package.json declares: Node.js 18, the newest Next.js 15.0 patch, React 18
+#   latest  the newest stable Node.js release with the Next.js and React releases npm tags latest
+#   canary  the newest Node.js release candidate when it is newer than the newest stable release, otherwise that stable
+#           release, with Next.js's canary and the newest React release that canary accepts
+# The floor leg runs on the oldest Ubuntu image GitHub offers, latest and canary on ubuntu-latest, so a new runner image
+# is covered as well. Every live job checks, before it creates a source, that the Node.js running, the client install
+# (the tarball packed here, or npm on the schedule) and the Next.js and React versions are the planned ones, and writes
+# them into its summary.
+# Pushes to main and pull requests install the client packed from the checkout, as the Release workflow packs it. The
+# daily schedule installs the newest release from npm instead, which is what a customer gets today. A failure on main or
+# on the schedule files a Linear issue (notify_linear_failure.yml), at low priority when only the canary failed.
+# Pull requests from forks and Dependabot run only the local receiver and the plan: they get no secrets, so they cannot
+# create a source.
+#
+# Secrets: TEST_TEAM_TELEMETRY_API, TEST_TEAM_CONNECTION_USERNAME, TEST_TEAM_CONNECTION_PASSWORD (Better Stack's E2E
+# testing team), LINEAR_* (see notify_linear_failure.yml).
+#
+# One leg, or exact versions: Actions → E2E → Run workflow, pick the leg and optionally set node-version (e.g. 22 or
+# 24.11.1), next-version or react-version (a version, an npm tag or a range, e.g. 15.3 for its newest patch), which
+# replace the planned versions of every leg that runs. That is how a failure is bisected to one release.
+
 on:
-  workflow_dispatch:
-  pull_request:
   push:
-    branches:
-      - main
+    branches: [main]
+  pull_request:
   schedule:
-    - cron: "20 5 * * *"
+    - cron: '30 6 * * *'
+  workflow_dispatch:
+    inputs:
+      leg:
+        description: 'Live leg to run'
+        type: choice
+        options: [all, floor, latest, canary]
+        default: all
+      source:
+        description: 'checkout: the client packed from this checkout, as the Release workflow packs it. npm: its newest release on npm, what a customer installs'
+        type: choice
+        options: [checkout, npm]
+        default: checkout
+      node-version:
+        description: 'One Node.js version (e.g. 22 or 24.11.1) instead of the planned one'
+        type: string
+      next-version:
+        description: 'One Next.js version, tag or range (e.g. 15.3.9, 15.3 or canary) instead of the planned one'
+        type: string
+      react-version:
+        description: 'One React version, tag or range (e.g. 19.1.0 or 18) instead of the planned one'
+        type: string
 
 permissions:
   contents: read
 
 jobs:
-  example-app:
-    name: Example app on Next.js ${{ matrix.next }} and React ${{ matrix.react }}
+  local-receiver:
+    name: local receiver (Next.js ${{ matrix.next }}, React ${{ matrix.react }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        next: ["15", "16"]
-        react: ["18", "19"]
+        next: ['15', '16']
+        react: ['18', '19']
       fail-fast: false
     env:
       # Inlined into the app at build time and read by the server at run time
@@ -35,27 +82,249 @@ jobs:
       NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN: e2e-token
 
     steps:
-      - uses: actions/checkout@v7
+      - name: "[Setup] Checkout code"
+        uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v7
+      - name: "[Setup] Node.js"
+        uses: actions/setup-node@v7
         with:
           node-version: 24.x
 
-      - name: Pack the library as it would be published
+      - name: "[Setup] Pack the library as it would be published"
         run: |
           npm ci
           npm pack --ignore-scripts
 
-      - name: Install the tarball into the example app with Next.js ${{ matrix.next }} and React ${{ matrix.react }}
+      - name: "[Setup] Install the tarball into the example app with Next.js ${{ matrix.next }} and React ${{ matrix.react }}"
         working-directory: examples/logger
         run: >
           npm install --no-save ../../logtail-next-*.tgz
           next@${{ matrix.next }} react@${{ matrix.react }} react-dom@${{ matrix.react }}
           @types/react@${{ matrix.react }} @types/react-dom@${{ matrix.react }}
 
-      - name: Build the example app
+      - name: "[Setup] Build the example app"
         working-directory: examples/logger
         run: npm run build
 
-      - name: Run the example app and check the logs it delivers
+      - name: "[Test] Run the example app and check the logs it delivers"
         run: node --test e2e/example-app.test.mjs
+
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+
+    steps:
+      - name: "[Setup] Checkout code"
+        uses: actions/checkout@v7
+
+      - name: "[Setup] Node.js"
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+
+      - name: "[Setup] Plan the live legs"
+        id: plan
+        env:
+          LEG: ${{ inputs.leg || 'all' }}
+          NODE_VERSION: ${{ inputs.node-version }}
+          NEXT_VERSION: ${{ inputs.next-version }}
+          REACT_VERSION: ${{ inputs.react-version }}
+          # The schedule tests what a customer installs today, pushes and pull requests test the checkout.
+          CLIENT_FROM: ${{ github.event_name == 'schedule' && 'npm' || inputs.source || 'checkout' }}
+        run: |
+          MATRIX=$(bash e2e/plan.sh)
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          jq . <<<"$MATRIX"
+
+  live:
+    needs: plan
+    name: ${{ matrix.name }}
+    # Forks and Dependabot get no repository secrets, so their pull requests skip the live legs.
+    if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
+
+    env:
+      LEG: ${{ matrix.leg }}
+      CLIENT_FROM: ${{ matrix.source }}
+      CLIENT: ${{ matrix.client }}
+      PLANNED_NODE: ${{ matrix.node }}
+      PLANNED_NEXT: ${{ matrix.next }}
+      PLANNED_REACT: ${{ matrix.react }}
+      PLANNED_TYPES_REACT: ${{ matrix.types_react }}
+      PLANNED_TYPES_REACT_DOM: ${{ matrix.types_react_dom }}
+
+    steps:
+      - name: "[Setup] Checkout code"
+        uses: actions/checkout@v7
+
+      # The Release workflow packs on Node.js 24, the leg's Node.js only runs the example.
+      - name: "[Setup] Node.js 24 to pack the client"
+        if: ${{ matrix.source == 'checkout' }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.x
+
+      - name: "[Setup] Pack the client as the Release workflow does"
+        if: ${{ matrix.source == 'checkout' }}
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+          npm pack --ignore-scripts
+
+      - name: "[Setup] Node.js ${{ matrix.node }}"
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+
+      # Pinned, so that npm cannot quietly install another release when the planned ones do not fit together: it fails
+      # and names the conflict instead. --no-save leaves the example's package.json, which takes the library from the
+      # checkout, as it is.
+      - name: "[Setup] Install the client, Next.js and React into the example app"
+        working-directory: examples/logger
+        run: |
+          if [ "$CLIENT_FROM" = npm ]; then CLIENT_SPEC="@logtail/next@$CLIENT"; else CLIENT_SPEC="../../logtail-next-$CLIENT.tgz"; fi
+          # npm never counts a pre-release such as 16.5.0-canary.41 as matching the client's peer range next >=15.0,
+          # so a Next.js pre-release installs only without the peer check.
+          FLAGS=""
+          if [[ "$PLANNED_NEXT" == *-* ]]; then FLAGS=--legacy-peer-deps; fi
+          npm install --no-save --no-audit --no-fund $FLAGS "$CLIENT_SPEC" "next@$PLANNED_NEXT" "react@$PLANNED_REACT" "react-dom@$PLANNED_REACT" \
+            "@types/react@$PLANNED_TYPES_REACT" "@types/react-dom@$PLANNED_TYPES_REACT_DOM"
+
+      # Drives the runner's Chrome, so nothing downloads a browser. 1.61 is the newest release that still runs on
+      # Node.js 18, the floor's. The driver is not under test, and the same one serves every leg.
+      - name: "[Setup] Browser driver"
+        run: npm install --prefix e2e --no-save --no-package-lock --no-audit --no-fund playwright-core@1.61.1
+
+      - name: "[Verify] Installed versions are the planned ones"
+        working-directory: examples/logger
+        run: |
+          installed() { node -p "require('./node_modules/$1/package.json').version"; }
+          NODE=$(node -v)
+          # npm records where the client came from: the tarball's path, or the registry's URL. npm ls exits non-zero
+          # here, because the example's package.json asks for the library in ../.. instead.
+          RESOLVED=$( (npm ls @logtail/next --json 2>/dev/null || true) | jq -r '.dependencies["@logtail/next"].resolved // ""')
+          mkdir -p ../../out
+          echo "- Node.js $NODE, npm $(npm -v), @logtail/next $(installed @logtail/next) from ${RESOLVED:-nowhere}, next $(installed next), react $(installed react), react-dom $(installed react-dom), @types/react $(installed @types/react), @types/react-dom $(installed @types/react-dom), $(google-chrome --version)" | tee -a ../../out/versions.md "$GITHUB_STEP_SUMMARY"
+          FAILED=0
+          # The planned Node.js is a major (18), an exact release (26.13.0) or an exact release candidate (27.0.0-rc.1).
+          case "$NODE" in
+            "v$PLANNED_NODE" | "v$PLANNED_NODE".*) ;;
+            *) echo "::error::Node.js $NODE is running, but the $LEG leg plans $PLANNED_NODE."; FAILED=1 ;;
+          esac
+          if [ "$CLIENT_FROM" = checkout ]; then
+            if [ "$RESOLVED" != "file:$GITHUB_WORKSPACE/logtail-next-$CLIENT.tgz" ]; then
+              echo "::error::@logtail/next was not installed from the tarball packed here: npm resolved it from '${RESOLVED:-nowhere}'."
+              FAILED=1
+            fi
+            # And the installed package is the tarball's content, file for file.
+            mkdir -p "$RUNNER_TEMP/tarball"
+            tar -xzf "$GITHUB_WORKSPACE/logtail-next-$CLIENT.tgz" -C "$RUNNER_TEMP/tarball"
+            if ! diff -r "$RUNNER_TEMP/tarball/package" node_modules/@logtail/next > ../../out/package.diff; then
+              head -n 20 ../../out/package.diff
+              echo "::error::The installed node_modules/@logtail/next differs from the tarball packed here."
+              FAILED=1
+            fi
+          elif [ "$RESOLVED" != "https://registry.npmjs.org/@logtail/next/-/next-$CLIENT.tgz" ]; then
+            echo "::error::@logtail/next was resolved from '${RESOLVED:-nowhere}' instead of the npm release $CLIENT."
+            FAILED=1
+          fi
+          for check in "next $PLANNED_NEXT" "react $PLANNED_REACT" "react-dom $PLANNED_REACT" "@types/react $PLANNED_TYPES_REACT" "@types/react-dom $PLANNED_TYPES_REACT_DOM"; do
+            read -r name want <<<"$check"
+            got=$(installed "$name")
+            if [ "$got" != "$want" ]; then
+              echo "::error::$name $got is installed, but the $LEG leg plans $want."
+              FAILED=1
+            fi
+          done
+          exit "$FAILED"
+
+      - name: "[Setup] Create a source"
+        id: source
+        uses: ./.github/actions/create-source
+        with:
+          api-token: ${{ secrets.TEST_TEAM_TELEMETRY_API }}
+          name: e2e-nextjs-gh${{ github.run_id }}a${{ github.run_attempt }}-${{ matrix.leg }}
+          platform: javascript
+
+      # The source's token and ingesting URL are inlined into the app at build time, so the app is built only now.
+      # Building renders the RSC page, which logs and sends its line from here.
+      - name: "[Test] Build the example app"
+        working-directory: examples/logger
+        env:
+          NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN: ${{ steps.source.outputs.token }}
+          NEXT_PUBLIC_BETTER_STACK_INGESTING_URL: https://${{ steps.source.outputs.ingesting-host }}
+        run: |
+          set -o pipefail
+          if ! npm run build 2>&1 | tee ../../out/build.log; then
+            echo "::error::next build failed: $(grep -m 1 -E 'Type error|Error:|Failed to compile' ../../out/build.log || tail -n 1 ../../out/build.log)"
+            exit 1
+          fi
+
+      - name: "[Test] Run the example app and click through it in Chrome"
+        env:
+          NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN: ${{ steps.source.outputs.token }}
+          NEXT_PUBLIC_BETTER_STACK_INGESTING_URL: https://${{ steps.source.outputs.ingesting-host }}
+        run: node e2e/drive-example-app.mjs
+
+      - name: "[Verify] Read the rows back"
+        uses: ./.github/actions/verify-logs
+        with:
+          connection-username: ${{ secrets.TEST_TEAM_CONNECTION_USERNAME }}
+          connection-password: ${{ secrets.TEST_TEAM_CONNECTION_PASSWORD }}
+          connect-host: ${{ steps.source.outputs.connect-host }}
+          collection: ${{ steps.source.outputs.collection }}
+          expected: e2e/expected.json
+
+      - name: "[Cleanup] Delete this job's source and stale ones of earlier runs"
+        if: ${{ always() }}
+        uses: ./.github/actions/cleanup-sources
+        with:
+          api-token: ${{ secrets.TEST_TEAM_TELEMETRY_API }}
+          prefix: e2e-nextjs-
+          id: ${{ steps.source.outputs.id }}
+
+      - name: "[Report] Job summary"
+        if: ${{ always() }}
+        run: |
+          if [ -f out/summary.md ]; then
+            { echo; cat out/summary.md; } >> "$GITHUB_STEP_SUMMARY"
+            # The Linear issue names the job and links the run, so it gets the versions, the read-back and the
+            # cleanup only when that left something behind. Without a read-back summary the notifier takes the
+            # job's ::error:: lines instead.
+            mkdir -p report
+            { cat out/versions.md; echo; cat out/summary.md; } > report/summary.md
+            if grep -q '❌' out/cleanup.md 2>/dev/null; then { echo; cat out/cleanup.md; } >> report/summary.md; fi
+          else
+            { echo; echo "❌ Stopped before the rows were read back, see the failed step."; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f out/cleanup.md ]; then { echo; cat out/cleanup.md; } >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - name: "[Report] Hand the summary to the Linear issue"
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-summary-${{ matrix.name }}
+          path: report/summary.md
+          if-no-files-found: ignore
+          retention-days: 7
+          # A re-run attempt uploads under the same name.
+          overwrite: true
+
+  notify-linear:
+    if: ${{ failure() && (github.ref == 'refs/heads/main' || github.event_name == 'schedule') }}
+    needs: [local-receiver, live]
+    # The notifier reads the failed jobs, their summary artifacts and their annotations.
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+    uses: ./.github/workflows/notify_linear_failure.yml
+    with:
+      job_summaries: true
+    secrets: inherit

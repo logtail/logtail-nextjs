@@ -1,0 +1,46 @@
+[
+  {"level": "info", "message": "RSC page visited", "contains": {"source": "frontend-log", "fields": {"page": "rsc", "renderType": "server"}}},
+
+  {"level": "info", "message": "GET /api/lambda", "contains": {"source": "middleware", "request": {"method": "GET", "path": "/api/lambda"}}},
+  {"level": "info", "message_prefix": "GET /api/lambda 200 in ", "contains": {"source": "lambda", "request": {"path": "/api/lambda", "statusCode": 200}}},
+  {"level": "info", "message": "lambda route", "contains": {"source": "lambda-log", "request": {"path": "/api/lambda", "statusCode": 200}}},
+
+  {"level": "info", "message": "GET /api/edge", "contains": {"source": "middleware", "request": {"method": "GET", "path": "/api/edge"}}},
+  {"level": "info", "message_prefix": "GET /api/edge 200 in ", "contains": {"source": "edge", "request": {"path": "/api/edge", "statusCode": 200}}},
+  {"level": "info", "message": "fired from edge route", "contains": {"source": "edge-log", "request": {"path": "/api/edge", "statusCode": 200}}},
+
+  {"level": "info", "message": "POST /api/dynamic/42", "contains": {"source": "middleware", "request": {"method": "POST", "path": "/api/dynamic/42"}}},
+  {"level": "info", "message_prefix": "POST /api/dynamic/42 200 in ", "contains": {"source": "edge", "request": {"path": "/api/dynamic/42", "statusCode": 200}}},
+  {"level": "info", "message": "dynamic route", "contains": {"source": "edge-log", "request": {"path": "/api/dynamic/42", "statusCode": 200}}},
+
+  {"level": "info", "message": "GET /api/notfound", "contains": {"source": "middleware", "request": {"method": "GET", "path": "/api/notfound"}}},
+  {"level": "warn", "message_prefix": "GET /api/notfound 404 in ", "contains": {"source": "lambda", "request": {"path": "/api/notfound", "statusCode": 404}}},
+  {"level": "warn", "message_prefix": "NEXT_", "contains": {"source": "lambda-log", "request": {"path": "/api/notfound", "statusCode": 404}}},
+
+  {"level": "info", "message": "GET /api/redirect", "contains": {"source": "middleware", "request": {"method": "GET", "path": "/api/redirect"}}},
+  {"level": "info", "message_prefix": "GET /api/redirect 307 in ", "contains": {"source": "lambda", "request": {"path": "/api/redirect", "statusCode": 307}}},
+  {"level": "info", "message": "NEXT_REDIRECT", "contains": {"source": "lambda-log", "request": {"path": "/api/redirect", "statusCode": 307}}},
+
+  {"level": "info", "message": "GET /api/permanentRedirect", "contains": {"source": "middleware", "request": {"method": "GET", "path": "/api/permanentRedirect"}}},
+  {"level": "info", "message_prefix": "GET /api/permanentRedirect 308 in ", "contains": {"source": "lambda", "request": {"path": "/api/permanentRedirect", "statusCode": 308}}},
+  {"level": "info", "message": "NEXT_REDIRECT", "contains": {"source": "lambda-log", "request": {"path": "/api/permanentRedirect", "statusCode": 308}}},
+
+  {"level": "info", "message": "POST /api/redact", "contains": {"source": "middleware", "request": {"method": "POST", "path": "/api/redact"}}},
+  {"level": "info", "message_prefix": "POST /api/redact 200 in ", "contains": {"source": "lambda", "request": {"path": "/api/redact", "statusCode": 200, "details": {"body": {"user": "ada", "password": "[FILTERED]"}, "headers": {"authorization": "[FILTERED]", "cookie": "[FILTERED]", "content-type": "application/json"}}}}},
+  {"level": "info", "message": "redact route", "contains": {"source": "lambda-log", "fields": {"user": "ada", "password": "[FILTERED]"}, "request": {"path": "/api/redact", "statusCode": 200}}},
+
+  {"level": "info", "message": "POST /api/redact-edge", "contains": {"source": "middleware", "request": {"method": "POST", "path": "/api/redact-edge"}}},
+  {"level": "info", "message_prefix": "POST /api/redact-edge 200 in ", "contains": {"source": "edge", "request": {"path": "/api/redact-edge", "statusCode": 200, "details": {"body": {"user": "ada", "password": "[FILTERED]"}, "headers": {"authorization": "[FILTERED]", "cookie": "[FILTERED]", "content-type": "application/json"}}}}},
+  {"level": "info", "message": "redact-edge route", "contains": {"source": "edge-log", "fields": {"user": "ada", "password": "[FILTERED]"}, "request": {"path": "/api/redact-edge", "statusCode": 200}}},
+
+  {"level": "info", "message": "GET /", "contains": {"source": "middleware", "request": {"method": "GET", "path": "/"}}},
+  {"level": "info", "message": "Page loaded", "contains": {"source": "frontend-log", "fields": {"page": "home", "path": "/"}}},
+  {"level": "info", "message": "Info log from button click", "contains": {"source": "frontend-log", "fields": {"action": "button_click", "button": "info", "path": "/"}}},
+  {"level": "error", "message": "Error log from button click", "contains": {"source": "frontend-log", "fields": {"action": "button_click", "button": "error", "error": "Simulated error for demo"}}},
+  {"level": "info", "message": "Complex log with user context", "contains": {"source": "frontend-log", "fields": {"action": "context_demo", "context": {"userId": "demo-user-123", "preferences": {"theme": "dark", "language": "en"}}}}},
+  {"level": "debug", "message": "Debug log from button click", "contains": {"source": "frontend-log", "fields": {"action": "button_click", "button": "debug"}}},
+
+  {"level": "info", "message": "GET /worker", "contains": {"source": "middleware", "request": {"method": "GET", "path": "/worker"}}},
+  {"level": "info", "message": "fired from worker", "contains": {"source": "frontend-log"}},
+  {"level": "info", "message": "100000", "contains": {"source": "frontend-log"}}
+]

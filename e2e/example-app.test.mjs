@@ -108,13 +108,11 @@ before(
     });
     responses['/_betterstack/logs'] = { status: proxied.status };
 
-    // Every request is reported by the middleware, which flushes after the response went out
+    // Every request is reported by the middleware, which flushes after the response went out. Its matcher
+    // leaves out the proxy path.
     await waitFor(
       'the logs of every request',
-      () =>
-        [...requests, ...secretRequests, ['POST', '/_betterstack/logs']].every(
-          ([, path]) => events('middleware', path).length > 0
-        ),
+      () => [...requests, ...secretRequests].every(([, path]) => events('middleware', path).length > 0),
       15000
     ).catch(() => {}); // the tests below say what exactly is missing
   },
