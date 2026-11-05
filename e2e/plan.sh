@@ -4,7 +4,8 @@
 #   floor   the oldest versions package.json declares: the Node.js major of engines.node, the newest patch of the
 #           Next.js minor of peerDependencies.next, and the newest release of the React major of peerDependencies.react
 #   latest  the newest stable Node.js release, and what npm's latest tags name for Next.js and React
-#   canary  the newest Node.js nightly build, Next.js's canary tag, and the newest React release that canary accepts
+#   canary  the newest Node.js release candidate when it is newer than the newest stable release, otherwise that stable
+#           release, with Next.js's canary tag and the newest React release that canary accepts
 # @types/react and @types/react-dom follow React's major on the floor, their latest tag on the other legs.
 # Env: LEG (all, floor, latest or canary), CLIENT_FROM (checkout or npm), and NODE_VERSION, NEXT_VERSION,
 #      REACT_VERSION: versions (or npm tags and ranges) that replace the planned ones in every leg.
@@ -36,10 +37,17 @@ newest_node() {
     | jq -r '[.[].version | ltrimstr("v") | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))] | sort_by(split(".") | map(tonumber)) | last'
 }
 
-# The version of the newest Node.js nightly that has a Linux x64 build: a nightly's builds are uploaded one by one.
-newest_node_nightly() {
-  retry curl -fsS -m 60 https://nodejs.org/download/nightly/index.json \
-    | jq -r '[.[] | select(.files | index("linux-x64"))] | sort_by(.date) | last | .version | ltrimstr("v")'
+# Whether version $1 sorts above version $2.
+newer() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -n 1)" = "$1" ]; }
+
+# The newest Node.js release candidate with a Linux x64 build (a candidate's builds are uploaded one by one) when it
+# leads up to a release above stable release $1, otherwise $1: candidates exist only for some releases, and the list
+# keeps old ones.
+canary_node() {
+  local rc
+  rc=$(retry curl -fsS -m 60 https://nodejs.org/download/rc/index.json \
+    | jq -r '.[] | select(.files | index("linux-x64")) | .version | ltrimstr("v")' | sort -V | tail -n 1)
+  if [ -n "$rc" ] && newer "${rc%%-*}" "$1"; then echo "$rc"; else echo "$1"; fi
 }
 
 # The version a >= floor in package.json starts at, e.g. 15.0 for ">=15.0", or "" when it is no plain >= floor.
@@ -76,7 +84,7 @@ for leg in $LEGS; do
       react=$(newest react latest)
       types=latest ;;
     canary)
-      node=$(newest_node_nightly)
+      node=$(canary_node "$(newest_node)")
       next=$(newest next canary)
       react=$(newest react "$(retry npm view "next@$next" peerDependencies.react)")
       types=latest ;;

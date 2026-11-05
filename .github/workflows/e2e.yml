@@ -17,7 +17,8 @@ name: E2E
 #                 with sources of earlier runs left behind for more than 3 hours. e2e/plan.sh plans three legs:
 #   floor   the oldest versions package.json declares: Node.js 18, the newest Next.js 15.0 patch, React 18
 #   latest  the newest stable Node.js release with the Next.js and React releases npm tags latest
-#   canary  the newest Node.js nightly with Next.js's canary and the newest React release that canary accepts
+#   canary  the newest Node.js release candidate when it is newer than the newest stable release, otherwise that stable
+#           release, with Next.js's canary and the newest React release that canary accepts
 # The floor leg runs on the oldest Ubuntu image GitHub offers, latest and canary on ubuntu-latest, so a new runner image
 # is covered as well. Every live job checks, before it creates a source, that the Node.js running, the client install
 # (the tarball packed here, or npm on the schedule) and the Next.js and React versions are the planned ones, and writes
@@ -211,7 +212,7 @@ jobs:
           mkdir -p ../../out
           echo "- Node.js $NODE, npm $(npm -v), @logtail/next $(installed @logtail/next) from ${RESOLVED:-nowhere}, next $(installed next), react $(installed react), react-dom $(installed react-dom), @types/react $(installed @types/react), @types/react-dom $(installed @types/react-dom), $(google-chrome --version)" | tee -a ../../out/versions.md "$GITHUB_STEP_SUMMARY"
           FAILED=0
-          # The planned Node.js is a major (18), an exact release (26.13.0) or an exact nightly.
+          # The planned Node.js is a major (18), an exact release (26.13.0) or an exact release candidate (27.0.0-rc.1).
           case "$NODE" in
             "v$PLANNED_NODE" | "v$PLANNED_NODE".*) ;;
             *) echo "::error::Node.js $NODE is running, but the $LEG leg plans $PLANNED_NODE."; FAILED=1 ;;
