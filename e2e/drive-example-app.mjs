@@ -55,10 +55,11 @@ async function startApp() {
   );
   app.stdout.on('data', (data) => (appOutput += data));
   app.stderr.on('data', (data) => (appOutput += data));
-  // The favicon is a static file that neither the middleware nor a route handler logs.
+  // The app is up once it answers at all, whatever the status: the requests below check that. The favicon is
+  // something that neither the middleware nor a route handler logs.
   const ready = () =>
     fetch(`${appUrl}/favicon.ico`)
-      .then((response) => response.ok)
+      .then(() => true)
       .catch(() => false);
   const deadline = Date.now() + 60000;
   while (!(await ready())) {
@@ -143,18 +144,25 @@ try {
   failure = error.message;
 }
 await browser?.close();
-app?.kill();
-await sleep(1000);
+if (app && app.exitCode === null) {
+  const exited = new Promise((resolve) => app.once('exit', resolve));
+  app.kill();
+  await exited;
+}
 mkdirSync(out, { recursive: true });
 writeFileSync(join(out, 'app.log'), appOutput);
 console.log(`::group::Example app output\n${appOutput}\n::endgroup::`);
+const lines = appOutput.split('\n');
 // The client prints what it could not deliver: a network error, or a 5xx or 429 answer after its retries.
-const deliveryErrors = appOutput
-  .split('\n')
-  .filter((line) => /fetch failed| responded with |Failed to proxy/.test(line));
-if (!failure && deliveryErrors.length > 0) failure = `the app could not deliver logs: ${deliveryErrors[0].trim()}`;
+const deliveryError = lines.find((line) => /fetch failed| responded with |Failed to proxy/.test(line));
+if (!failure && deliveryError) failure = `the app could not deliver logs: ${deliveryError.trim()}`;
+// The first error the app printed, such as the exception behind a 500, says why.
+const appError = lines.find((line) => /Error/.test(line));
+if (failure && appError) failure += `. The app printed: ${appError.trim()}`;
 if (failure) {
   console.log(`::error::${failure}`);
-  process.exit(1);
+  // Not process.exit(): it can cut off output that is still being written to a pipe.
+  process.exitCode = 1;
+} else {
+  console.log('the app served every request, and the browser and the worker logs were accepted');
 }
-console.log('the app served every request, and the browser and the worker logs were accepted');
